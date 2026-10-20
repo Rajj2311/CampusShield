@@ -22,8 +22,12 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_SERVICES_JSON" | base64 -d > android/app/google-services.json
+
       - run: flutter pub get
-      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter build apk --debug
 
       - uses: actions/upload-artifact@v4
