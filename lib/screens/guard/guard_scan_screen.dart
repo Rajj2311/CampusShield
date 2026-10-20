@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import '../../utils/tenant.dart';
 
 class GuardScanScreen extends StatefulWidget {
   final String guardName;
@@ -25,8 +26,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
     setState(() { _isProcessing = true; _resultMessage = null; });
 
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('leaveRequests')
+      final snap = await Tenant.col('leaveRequests')
           .where('qrToken', isEqualTo: qrToken)
           .limit(1).get();
 
@@ -61,8 +61,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
 
       if (gateStatus == 'ready') {
         // ── FIRST SCAN = EXIT ──────────────────────────────
-        await FirebaseFirestore.instance
-            .collection('leaveRequests').doc(doc.id).update({
+        await Tenant.col('leaveRequests').doc(doc.id).update({
           'gateStatus':    'out',
           'exitTime':      timeStr,
           'exitDate':      dateStr,
@@ -71,8 +70,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
         });
 
         // ── Student attendance 'leave' pe set karo ──────────
-        await FirebaseFirestore.instance
-            .collection('students')
+        await Tenant.col('students')
             .where('roll', isEqualTo: d['roll'])
             .limit(1).get()
             .then((s) {
@@ -126,8 +124,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
                 : '${minutes}m';
           }
 
-          await FirebaseFirestore.instance
-              .collection('leaveRequests').doc(doc.id).update({
+          await Tenant.col('leaveRequests').doc(doc.id).update({
             'gateStatus':      'completed',
             'returnTime':      timeStr,
             'returnDate':      dateStr,
@@ -137,8 +134,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
           });
 
           // ── Student attendance after return = 'absent'   ─
-          await FirebaseFirestore.instance
-              .collection('students')
+          await Tenant.col('students')
               .where('roll', isEqualTo: d['roll'])
               .limit(1).get()
               .then((s) {
@@ -190,8 +186,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
       String timeStr, String dateStr) async {
     final block = d['block'] ?? d['hostelBlock'] ?? '';
 
-    await FirebaseFirestore.instance
-        .collection('leaveRequests').doc(docId).update({
+    await Tenant.col('leaveRequests').doc(docId).update({
       'gateStatus':           'pending_warden_approval',
       'approvalType':         type,
       'guardScanTime':        timeStr,
@@ -200,15 +195,13 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
       'wardenApprovalStatus': 'pending',
     });
 
-    final wardenSnap = await FirebaseFirestore.instance
-        .collection('wardens')
+    final wardenSnap = await Tenant.col('wardens')
         .where('hostelBlock', isEqualTo: block)
         .limit(1).get();
 
     if (wardenSnap.docs.isNotEmpty) {
       final wardenId = wardenSnap.docs.first.id;
-      await FirebaseFirestore.instance
-          .collection('notifications')
+      await Tenant.col('notifications')
           .doc(wardenId)
           .collection('items').add({
         'title':     '⚠️ Gate Approval Required',
@@ -229,7 +222,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
 
   Future<void> _logActivity(String docId, Map<String, dynamic> d,
       String action, String timeStr, String dateStr) async {
-    await FirebaseFirestore.instance.collection('gateHistory').add({
+    await Tenant.col('gateHistory').add({
       'studentName': d['name'],
       'roll':        d['roll'],
       'room':        d['room'],
@@ -242,7 +235,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
       'createdAt':   FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance.collection('activity').add({
+    await Tenant.col('activity').add({
       'title':
           'Gate $action: ${d['name']} (Room ${d['room']}) — $timeStr',
       'time':      'Just now',

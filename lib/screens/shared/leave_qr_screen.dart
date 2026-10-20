@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import '../../utils/tenant.dart';
 
 class LeaveQRScreen extends StatelessWidget {
   final Map<String, dynamic> leaveData;
@@ -15,7 +16,7 @@ class LeaveQRScreen extends StatelessWidget {
         title: const Text('Gate Pass', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         iconTheme: const IconThemeData(color: Colors.white)),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('leaveRequests').doc(leaveId).snapshots(),
+        stream: Tenant.col('leaveRequests').doc(leaveId).snapshots(),
         builder: (context, snap) {
           if (!snap.hasData) return const Center(child: CircularProgressIndicator(color: Colors.white));
           final d = snap.data!.data() as Map<String, dynamic>;

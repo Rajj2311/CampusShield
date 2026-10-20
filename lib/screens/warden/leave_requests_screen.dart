@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/notification_helper.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class LeaveRequestsScreen extends StatefulWidget {
   const LeaveRequestsScreen({super.key});
@@ -34,11 +35,9 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
       updateData['qrToken']    = qrToken;
       updateData['gateStatus'] = 'ready';
     }
-    await FirebaseFirestore.instance
-        .collection('leaveRequests').doc(docId).update(updateData);
+    await Tenant.col('leaveRequests').doc(docId).update(updateData);
 
-    final doc = await FirebaseFirestore.instance
-        .collection('leaveRequests').doc(docId).get();
+    final doc = await Tenant.col('leaveRequests').doc(docId).get();
     final studentId = doc.data()?['studentId'] ?? '';
 
     await NotificationHelper.send(
@@ -51,7 +50,7 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
       type: 'leave',
       relatedId: docId);
 
-    await FirebaseFirestore.instance.collection('activity').add({
+    await Tenant.col('activity').add({
       'title':     'Leave request $status',
       'time':      'Just now',
       'createdAt': FieldValue.serverTimestamp(),
@@ -127,8 +126,7 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   if (nameCtrl.text.trim().isNotEmpty) {
-                    await FirebaseFirestore.instance
-                        .collection('leaveRequests').add({
+                    await Tenant.col('leaveRequests').add({
                       'name':        nameCtrl.text.trim(),
                       'roll':        rollCtrl.text.trim().toUpperCase(),
                       'room':        roomCtrl.text.trim(),
@@ -236,12 +234,10 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
         // List
         Expanded(child: StreamBuilder<QuerySnapshot>(
           stream: _filter == 'All'
-            ? FirebaseFirestore.instance
-                .collection('leaveRequests')
+            ? Tenant.col('leaveRequests')
                 .where('block', isEqualTo: _wardenHostel)
                 .snapshots()
-            : FirebaseFirestore.instance
-                .collection('leaveRequests')
+            : Tenant.col('leaveRequests')
                 .where('block', isEqualTo: _wardenHostel)
                 .where('status', isEqualTo: _filter)
                 .snapshots(),

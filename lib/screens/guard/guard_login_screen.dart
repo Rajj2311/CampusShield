@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'guard_dashboard.dart';
 import 'guard_register_screen.dart';
+import '../../utils/tenant.dart';
 
 class GuardLoginScreen extends StatefulWidget {
   const GuardLoginScreen({super.key});
@@ -31,8 +31,7 @@ class _GuardLoginScreenState extends State<GuardLoginScreen> {
     // ✅ Step 1: Firestore se real email fetch karo
     // (guards collection publicly readable nahi hai, isliye
     //  pehle email dhundne ke liye temporary anonymous login)
-    final snap = await FirebaseFirestore.instance
-        .collection('guards')
+    final snap = await Tenant.col('guards')
         .where('guardId', isEqualTo: guardId)
         .limit(1)
         .get();
@@ -114,8 +113,7 @@ class _GuardLoginScreenState extends State<GuardLoginScreen> {
                 final guardId = idCtrl.text.trim().toUpperCase();
                 if (guardId.isEmpty) return;
                 try {
-                  final snap = await FirebaseFirestore.instance
-                      .collection('guards').where('guardId', isEqualTo: guardId).limit(1).get();
+                  final snap = await Tenant.col('guards').where('guardId', isEqualTo: guardId).limit(1).get();
                   if (snap.docs.isEmpty) {
                     if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('❌ Guard ID not found.'),

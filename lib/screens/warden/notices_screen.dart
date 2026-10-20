@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class NoticesScreen extends StatefulWidget {
   const NoticesScreen({super.key});
@@ -96,8 +97,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
               child: ElevatedButton(
                 onPressed: () async {
                   if (titleCtrl.text.trim().isEmpty) return;
-                  await FirebaseFirestore.instance
-                      .collection('notices').add({
+                  await Tenant.col('notices').add({
                     'title':       titleCtrl.text.trim(),
                     'body':        bodyCtrl.text.trim(),
                     'urgency':     urgency,
@@ -119,8 +119,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
   }
 
   Future<void> _deleteNotice(String docId) async {
-    await FirebaseFirestore.instance
-        .collection('notices').doc(docId).delete();
+    await Tenant.col('notices').doc(docId).delete();
   }
 
   @override
@@ -151,8 +150,7 @@ class _NoticesScreenState extends State<NoticesScreen> {
             onPressed: () => _showAddNotice(context)),
         ]),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notices')
+        stream: Tenant.col('notices')
             .where('hostelBlock', isEqualTo: _wardenHostel)
             .snapshots(),
         builder: (context, snap) {

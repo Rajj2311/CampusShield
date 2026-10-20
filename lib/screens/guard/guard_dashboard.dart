@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../role_select_screen.dart';
 import 'guard_scan_screen.dart';
 import 'gate_history_screen.dart';
+import '../../utils/tenant.dart';
 
 class GuardDashboard extends StatefulWidget {
   final Map<String, dynamic> guardData;
@@ -81,14 +82,12 @@ class _GuardDashboardState extends State<GuardDashboard> {
 
           // ── Stats ─────────────────────────────────────────
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('leaveRequests')
+            stream: Tenant.col('leaveRequests')
                 .where('gateStatus', isEqualTo: 'out')
                 .snapshots(),
             builder: (context, outSnap) {
               return StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('leaveRequests')
+                stream: Tenant.col('leaveRequests')
                     .where('gateStatus', isEqualTo: 'completed')
                     .snapshots(),
                 builder: (context, doneSnap) {
@@ -132,8 +131,7 @@ class _GuardDashboardState extends State<GuardDashboard> {
             color: Color(0xFF1A3A5C))),
           const SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('leaveRequests')
+            stream: Tenant.col('leaveRequests')
                 .where('gateStatus', isEqualTo: 'out')
                 .snapshots(),
             builder: (context, snap) {
@@ -182,8 +180,7 @@ class _GuardDashboardState extends State<GuardDashboard> {
             color: Color(0xFF1A3A5C))),
           const SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('activity')
+            stream: Tenant.col('activity')
                 .orderBy('createdAt', descending: true)
                 .limit(10)
                 .snapshots(),

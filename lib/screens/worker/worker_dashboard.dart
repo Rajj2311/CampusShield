@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../constants.dart';
 import '../../utils/image_upload_helper.dart';
 import '../role_select_screen.dart';
+import '../../utils/tenant.dart';
 
 class WorkerDashboard extends StatefulWidget {
   final Map<String, dynamic> workerData;
@@ -24,7 +24,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
   // ── Accept Complaint ─────────────────────────────────────────────────
   Future<void> _acceptComplaint(String docId) async {
-    await FirebaseFirestore.instance.collection('complaints').doc(docId).update({
+    await Tenant.col('complaints').doc(docId).update({
       'status': 'In Progress',
       'acceptedAt': FieldValue.serverTimestamp(),
     });
@@ -36,7 +36,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   // ── Mark Resolved with Proof Photo ───────────────────────────────────
   Future<void> _markResolved(String docId) async {
     // Photo optional — Storage enable hone ke baad mandatory karenge
-    await FirebaseFirestore.instance.collection('complaints').doc(docId).update({
+    await Tenant.col('complaints').doc(docId).update({
   'afterPhotoUrl': null,
 
   // Complaint resolved again
@@ -68,7 +68,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
   Widget build(BuildContext context) {
     final hostel   = 'All Hostels';
     final category = widget.workerData['category'] ?? '';
-    final icon     = kWorkerCategories
+    final icon     = Tenant.workerCategories
         .firstWhere((c) => c['label'] == category, orElse: () => {'icon': '🔩'})['icon'];
 
     return Scaffold(
@@ -90,7 +90,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
       body: Column(children: [
         // Stats bar
         StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('complaints')
+          stream: Tenant.col('complaints')
               .where('assignedWorkerId', isEqualTo: widget.workerId).snapshots(),
           builder: (context, snap) {
             final all    = snap.data?.docs ?? [];
@@ -127,7 +127,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
         // Complaints list
         Expanded(child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection('complaints')
+          stream: Tenant.col('complaints')
               .where('assignedWorkerId', isEqualTo: widget.workerId)
               .orderBy('createdAt', descending: true)
               .snapshots(),
@@ -161,7 +161,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                       decoration: BoxDecoration(color: color.withOpacity(0.08),
                         borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), topRight: Radius.circular(14))),
                       child: Row(children: [
-                        Text(kWorkerCategories.firstWhere(
+                        Text(Tenant.workerCategories.firstWhere(
                           (c) => c['label'] == d['category'], orElse: () => {'icon': '🔩'})['icon'] ?? '🔩',
                           style: const TextStyle(fontSize: 22)),
                         const SizedBox(width: 10),

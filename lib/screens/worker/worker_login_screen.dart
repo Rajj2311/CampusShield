@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'worker_dashboard.dart';
 import 'worker_register_screen.dart';
+import '../../utils/tenant.dart';
 
 class WorkerLoginScreen extends StatefulWidget {
   const WorkerLoginScreen({super.key});
@@ -29,8 +29,7 @@ class _WorkerLoginScreenState extends State<WorkerLoginScreen> {
     }
 
     // ✅ Step 1: Firestore se real email fetch karo
-    final snap = await FirebaseFirestore.instance
-        .collection('workers')
+    final snap = await Tenant.col('workers')
         .where('workerId', isEqualTo: workerId)
         .limit(1)
         .get();
@@ -110,8 +109,7 @@ class _WorkerLoginScreenState extends State<WorkerLoginScreen> {
               onPressed: () async {
                 final wid = idCtrl.text.trim().toUpperCase();
                 if (wid.isEmpty) return;
-                final snap = await FirebaseFirestore.instance
-                    .collection('workers').where('workerId', isEqualTo: wid).limit(1).get();
+                final snap = await Tenant.col('workers').where('workerId', isEqualTo: wid).limit(1).get();
                 if (snap.docs.isEmpty) {
                   if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('❌ Worker ID not found.'), backgroundColor: Color(0xFFC62828)));

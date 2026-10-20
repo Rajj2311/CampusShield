@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../constants.dart';
 import 'worker_dashboard.dart';
-import '../../utils/remote_config_helper.dart';
+import '../../utils/tenant.dart';
 
 class WorkerRegisterScreen extends StatefulWidget {
   const WorkerRegisterScreen({super.key});
@@ -16,7 +15,7 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
   final _emailCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
   final _codeCtrl  = TextEditingController();
-  String _category = 'Electrician';
+  late String _category = Tenant.workerCategories.first['label'] as String;
   bool   _loading  = false;
   String? _error;
 
@@ -27,11 +26,6 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
       setState(() => _error = 'Fill all fields. Password min 6 characters.'); return;
     }
 
-    // Remote Config se fresh code fetch karo
-    await RemoteConfigHelper.refresh();
-    if (_codeCtrl.text.trim() != RemoteConfigHelper.workerCode) {
-      setState(() => _error = 'Invalid security code. Contact your warden.'); return;
-    }
 
     setState(() { _loading = true; _error = null; });
     try {
@@ -45,7 +39,15 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
         'role': 'Worker',
         'createdAt': FieldValue.serverTimestamp(),
       };
-      await FirebaseFirestore.instance.collection('workers').doc(cred.user!.uid).set(data);
+      try {
+        await Tenant.bindUser(uid: cred.user!.uid, role: 'worker',
+            docId: cred.user!.uid, code: _codeCtrl.text.trim());
+      } on FirebaseException {
+        await cred.user!.delete();
+        setState(() => _error = 'Invalid security code. Contact your warden.');
+        return;
+      }
+      await Tenant.col('workers').doc(cred.user!.uid).set(data);
       if (mounted) Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (_) => WorkerDashboard(workerData: data, workerId: cred.user!.uid)));
     } on FirebaseAuthException catch (e) {
@@ -95,7 +97,7 @@ class _WorkerRegisterScreenState extends State<WorkerRegisterScreen> {
               prefixIcon: const Icon(Icons.engineering, color: Color(0xFF1A3A5C)),
               filled: true, fillColor: Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
-            items: kWorkerCategories.map((c) => DropdownMenuItem(
+            items: Tenant.workerCategories.map((c) => DropdownMenuItem(
               value: c['label'] as String,
               child: Text('${c['icon']}  ${c['label']}'))).toList(),
             onChanged: (v) => setState(() => _category = v!)),

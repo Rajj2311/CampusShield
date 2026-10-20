@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../shared/leave_qr_screen.dart';
+import '../../utils/tenant.dart';
 
 class StudentLeaveScreen extends StatefulWidget {
   final Map<String, dynamic> studentData;
@@ -71,7 +72,7 @@ class _StudentLeaveScreenState extends State<StudentLeaveScreen> {
     }
     setState(() { _isLoading = true; _error = null; });
     try {
-      await FirebaseFirestore.instance.collection('leaveRequests').add({
+      await Tenant.col('leaveRequests').add({
         'name':        widget.studentData['name'],
         'roll':        widget.studentData['roll'],
         'room':        widget.studentData['room'],
@@ -214,8 +215,7 @@ class _StudentLeaveScreenState extends State<StudentLeaveScreen> {
           const SizedBox(height: 12),
 
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('leaveRequests')
+            stream: Tenant.col('leaveRequests')
                 .where('roll', isEqualTo: roll)
                 .snapshots(),
             builder: (context, snap) {

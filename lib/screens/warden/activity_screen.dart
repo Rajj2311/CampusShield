@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({super.key});
@@ -110,13 +111,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
         Expanded(child: StreamBuilder<QuerySnapshot>(
           stream: _filter == 'All'
-            ? FirebaseFirestore.instance
-                .collection('activity')
+            ? Tenant.col('activity')
                 .orderBy('createdAt', descending: true)
                 .limit(100)
                 .snapshots()
-            : FirebaseFirestore.instance
-                .collection('activity')
+            : Tenant.col('activity')
                 .where('type', isEqualTo: _filter)
                 .orderBy('createdAt', descending: true)
                 .limit(100)

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'tenant.dart';
 
 class NotificationHelper {
   static Future<void> send({
@@ -10,8 +11,7 @@ class NotificationHelper {
     String? relatedId,
   }) async {
     if (toUserId.isEmpty) return;
-    await FirebaseFirestore.instance
-        .collection('notifications')
+    await Tenant.col('notifications')
         .doc(toUserId)
         .collection('items')
         .add({
@@ -25,8 +25,7 @@ class NotificationHelper {
   }
 
   static Stream<int> unreadCount(String userId) {
-    return FirebaseFirestore.instance
-        .collection('notifications')
+    return Tenant.col('notifications')
         .doc(userId)
         .collection('items')
         .where('isRead', isEqualTo: false)
@@ -35,8 +34,7 @@ class NotificationHelper {
   }
 
   static Future<void> markAllRead(String userId) async {
-    final snap = await FirebaseFirestore.instance
-        .collection('notifications')
+    final snap = await Tenant.col('notifications')
         .doc(userId)
         .collection('items')
         .where('isRead', isEqualTo: false)

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class GateApprovalsScreen extends StatefulWidget {
   const GateApprovalsScreen({super.key});
@@ -25,12 +26,10 @@ class _GateApprovalsScreenState extends State<GateApprovalsScreen> {
 
   Future<void> _approve(String docId, bool approved) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    final leaveDoc = await FirebaseFirestore.instance
-        .collection('leaveRequests').doc(docId).get();
+    final leaveDoc = await Tenant.col('leaveRequests').doc(docId).get();
     final d = leaveDoc.data() as Map<String, dynamic>? ?? {};
 
-    await FirebaseFirestore.instance
-        .collection('leaveRequests').doc(docId).update({
+    await Tenant.col('leaveRequests').doc(docId).update({
       'gateStatus':           approved ? 'completed' : 'rejected_at_gate',
       'wardenApprovalStatus': approved ? 'approved' : 'rejected',
       'wardenApprovedBy':     uid,
@@ -44,8 +43,7 @@ class _GateApprovalsScreenState extends State<GateApprovalsScreen> {
     // skips anyone whose todayStatus is still 'leave').
     final roll = d['roll'];
     if (roll != null) {
-      final studentSnap = await FirebaseFirestore.instance
-          .collection('students')
+      final studentSnap = await Tenant.col('students')
           .where('roll', isEqualTo: roll)
           .limit(1)
           .get();
@@ -56,7 +54,7 @@ class _GateApprovalsScreenState extends State<GateApprovalsScreen> {
       }
     }
 
-    await FirebaseFirestore.instance.collection('activity').add({
+    await Tenant.col('activity').add({
       'title':     'Gate approval ${approved ? 'granted' : 'rejected'} by warden',
       'time':      'Just now',
       'type':      'gate_approval',
@@ -83,8 +81,7 @@ class _GateApprovalsScreenState extends State<GateApprovalsScreen> {
         ]),
         iconTheme: const IconThemeData(color: Colors.white)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('leaveRequests')
+        stream: Tenant.col('leaveRequests')
             .where('block', isEqualTo: _wardenHostel)
             .where('gateStatus', isEqualTo: 'pending_warden_approval')
             .snapshots(),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'student_dashboard.dart';
+import '../../utils/tenant.dart';
 
 class StudentRegisterScreen extends StatefulWidget {
   const StudentRegisterScreen({super.key});
@@ -27,8 +27,7 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
     }
     setState(() { _isLoading = true; _errorMessage = null; });
     try {
-      final snap = await FirebaseFirestore.instance
-          .collection('students').where('roll', isEqualTo: roll).limit(1).get();
+      final snap = await Tenant.col('students').where('roll', isEqualTo: roll).limit(1).get();
       if (snap.docs.isEmpty) {
         setState(() {
           _errorMessage = 'Roll number not found. Contact warden to add you first.';
@@ -48,11 +47,11 @@ class _StudentRegisterScreenState extends State<StudentRegisterScreen> {
         return;
       }
 
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email, password: pass);
+      await Tenant.bindUser(uid: cred.user!.uid, role: 'student', docId: studentDoc.id);
 
-      await FirebaseFirestore.instance
-          .collection('students')
+      await Tenant.col('students')
           .doc(studentDoc.id)
           .update({'hasAccount': true, 'email': email});
 

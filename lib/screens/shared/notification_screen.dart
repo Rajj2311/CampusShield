@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/notification_helper.dart';
+import '../../utils/tenant.dart';
 
 class NotificationScreen extends StatefulWidget {
   final String userId;
@@ -62,8 +63,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               style: TextStyle(color: Color(0xFFF0A500), fontSize: 12))),
         ]),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notifications')
+        stream: Tenant.col('notifications')
             .doc(widget.userId)
             .collection('items')
             .orderBy('createdAt', descending: true)

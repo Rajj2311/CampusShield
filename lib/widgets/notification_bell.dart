@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../screens/shared/notification_screen.dart';
+import '../utils/tenant.dart';
 
 class NotificationBell extends StatelessWidget {
   final String userId;
@@ -10,8 +11,7 @@ class NotificationBell extends StatelessWidget {
   Widget build(BuildContext context) {
     if (userId.isEmpty) return const SizedBox();
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('notifications')
+      stream: Tenant.col('notifications')
           .doc(userId)
           .collection('items')
           .where('isRead', isEqualTo: false)

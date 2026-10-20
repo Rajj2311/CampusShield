@@ -20,6 +20,7 @@
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
+import 'tenant.dart';
 
 class CampusGeofenceHelper {
   /// Ordered list of [latitude, longitude] pairs tracing the campus
@@ -36,6 +37,10 @@ class CampusGeofenceHelper {
     [28.460005642934608, 77.49079789274877],
   ];
 
+  /// Active boundary: the college's own polygon (Tenant config) if set,
+  /// otherwise the default constant above.
+  static List<List<double>> get _boundary => Tenant.geofence ?? kCampusBoundary;
+
   /// Optional small buffer (in meters) added around the polygon to
   /// absorb normal GPS inaccuracy. Mobile GPS is typically accurate to
   /// 5-15m, so a small buffer is enough there. Web/browser geolocation
@@ -48,14 +53,14 @@ class CampusGeofenceHelper {
   /// Returns true if [lat],[lng] falls inside the campus polygon
   /// (including the small buffer margin).
   static bool isInsideCampus(double lat, double lng) {
-    if (_pointInPolygon(lat, lng, kCampusBoundary)) return true;
+    if (_pointInPolygon(lat, lng, _boundary)) return true;
     if (kBufferMeters <= 0) return false;
 
     // Buffer check: also accept points within kBufferMeters of the
     // nearest polygon edge, so a student standing right on the
     // boundary line (where GPS could read either side) isn't unfairly
     // rejected.
-    final distanceToEdge = _distanceToPolygonEdgeMeters(lat, lng, kCampusBoundary);
+    final distanceToEdge = _distanceToPolygonEdgeMeters(lat, lng, _boundary);
     return distanceToEdge <= kBufferMeters;
   }
 
@@ -117,6 +122,6 @@ class CampusGeofenceHelper {
   /// Returns 0 if already inside.
   static double distanceOutsideCampusMeters(double lat, double lng) {
     if (isInsideCampus(lat, lng)) return 0;
-    return _distanceToPolygonEdgeMeters(lat, lng, kCampusBoundary);
+    return _distanceToPolygonEdgeMeters(lat, lng, _boundary);
   }
 }

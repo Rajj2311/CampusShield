@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../utils/tenant.dart';
 
 class StudentNoticesScreen extends StatelessWidget {
   final Map<String, dynamic> studentData;
@@ -22,8 +23,7 @@ class StudentNoticesScreen extends StatelessWidget {
         ]),
         iconTheme: const IconThemeData(color: Colors.white)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('notices')
+        stream: Tenant.col('notices')
             .where('hostelBlock', isEqualTo: block)
             .snapshots(),
         builder: (context, snap) {

@@ -14,6 +14,7 @@ import 'activity_screen.dart';
 import 'import_students_screen.dart';
 import 'gate_approvals_screen.dart';
 import 'device_approvals_screen.dart';
+import '../../utils/tenant.dart';
 
 class WardenDashboard extends StatefulWidget {
   const WardenDashboard({super.key});
@@ -34,8 +35,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
   Future<void> _loadWarden() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('wardens').doc(uid).get();
+    final doc = await Tenant.col('wardens').doc(uid).get();
     if (!doc.exists) return;
     setState(() {
       _wardenHostel = doc.data()?['hostelBlock'] ?? '';
@@ -117,8 +117,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
           Row(children: [
             // Total Students
             Expanded(child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('students')
+              stream: Tenant.col('students')
                   .where('block', isEqualTo: _wardenHostel)
                   .snapshots(),
               builder: (context, snap) => _statCard(
@@ -128,8 +127,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
             const SizedBox(width: 12),
             // Pending Leaves
             Expanded(child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('leaveRequests')
+              stream: Tenant.col('leaveRequests')
                   .where('block', isEqualTo: _wardenHostel)
                   .where('status', isEqualTo: 'Pending')
                   .snapshots(),
@@ -142,8 +140,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
           Row(children: [
             // Open Complaints
             Expanded(child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('complaints')
+              stream: Tenant.col('complaints')
                   .where('hostelBlock', isEqualTo: _wardenHostel)
                   .where('status', isEqualTo: 'Pending')
                   .snapshots(),
@@ -154,8 +151,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
             const SizedBox(width: 12),
             // Students Out
             Expanded(child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('leaveRequests')
+              stream: Tenant.col('leaveRequests')
                   .where('block', isEqualTo: _wardenHostel)
                   .where('gateStatus', isEqualTo: 'out')
                   .snapshots(),
@@ -224,8 +220,7 @@ class _WardenDashboardState extends State<WardenDashboard> {
               fontWeight: FontWeight.bold, color: Color(0xFF1A3A5C))),
           const SizedBox(height: 12),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('activity')
+            stream: Tenant.col('activity')
                 .orderBy('createdAt', descending: true)
                 .limit(8)
                 .snapshots(),

@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ───────── helpers ─────────
+    function signedIn() { return request.auth != null; }
+    function isOwner()  { return signedIn() && request.auth.token.superAdmin == true; }
+
+    function idxPath(uid) { return /databases/$(database)/documents/userIndex/$(uid); }
+    function hasIdx()     { return signedIn() && exists(idxPath(request.auth.uid)); }
+    function idx()        { return get(idxPath(request.auth.uid)).data; }
+
+    function collegeDoc(c) { return get(/databases/$(database)/documents/colleges/$(c)).data; }
+    function collegeActive(c) { return collegeDoc(c).status == 'approved'; }
+
+    // signed-in user belongs to college c AND college is approved
+    function isMember(c) { return hasIdx() && idx().collegeId == c && collegeActive(c); }
+    function roleIs(c, r) { return isMember(c) && idx().role == r; }
+    function isStaff(c)   { return isMember(c) && idx().role in ['warden', 'guard']; }
+
+    function generic(col, docId) {
+      return !(col in ['students', 'guards', 'workers', 'wardens'])
+          && !(col == 'settings' && docId == 'codes');
+    }
+
+    // ───────── owner-managed college profiles ─────────
+    // Public profile (name, hostels, config, status) is readable so the
+    // college-code screen works before login. Only the app owner writes.
+    match /colleges/{c} {
+      allow get: if true;
+      allow list, write: if isOwner();
+
+      // Role registration codes: never readable by students/guards/workers.
+      match /settings/codes {
+        allow read: if roleIs(c, 'warden') || isOwner();
+        allow write: if roleIs(c, 'warden') || isOwner();
+      }
+
+      // Login lookups happen BEFORE sign-in (roll / guardId / workerId -> email).
+      // Only single-document lookups are allowed anonymously, so the full
+      // roster can't be dumped.
+      match /students/{id} {
+        allow list: if (isMember(c) || request.query.limit <= 1) || isOwner();
+        allow get:  if isMember(c) || isOwner();
+        allow create, delete: if roleIs(c, 'warden');
+        allow update: if roleIs(c, 'warden') || isStaff(c)
+                      || (roleIs(c, 'student') && idx().docId == id);
+      }
+      match /guards/{id} {
+        allow list: if (isMember(c) || request.query.limit <= 1) || isOwner();
+        allow get:  if isMember(c) || isOwner();
+        allow create: if signedIn() && request.auth.uid == id && hasIdx()
+                      && idx().collegeId == c && idx().role == 'guard';
+        allow update, delete: if roleIs(c, 'warden') || (signedIn() && request.auth.uid == id && isMember(c));
+      }
+      match /workers/{id} {
+        allow list: if (isMember(c) || request.query.limit <= 1) || isOwner();
+        allow get:  if isMember(c) || isOwner();
+        allow create: if signedIn() && request.auth.uid == id && hasIdx()
+                      && idx().collegeId == c && idx().role == 'worker';
+        allow update, delete: if roleIs(c, 'warden') || (signedIn() && request.auth.uid == id && isMember(c));
+      }
+      match /wardens/{id} {
+        allow read: if isMember(c) || isOwner();
+        allow create: if signedIn() && request.auth.uid == id && hasIdx()
+                      && idx().collegeId == c && idx().role == 'warden';
+        allow update, delete: if (signedIn() && request.auth.uid == id && isMember(c)) || isOwner();
+      }
+
+      // Everything else in a college: members only (per-role tightening is Phase 2).
+      // (the collections above and settings/codes are excluded, because any
+      //  matching rule that allows access wins in Firestore rules)
+      match /{col}/{docId} {
+        allow read, write: if generic(col, docId) && (isMember(c) || isOwner());
+      }
+      match /{col}/{docId}/{rest=**} {
+        allow read, write: if generic(col, docId) && (isMember(c) || isOwner());
+      }
+    }
+
+    // ───────── uid -> college binding ─────────
+    // Created once, right after account creation. Rules verify the claim:
+    //   staff   -> must supply the college's role code (colleges/{c}/settings/codes)
+    //   student -> must point at an existing, not-yet-registered student record
+    // Users can never edit or delete it afterwards.
+    match /userIndex/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isOwner());
+      allow list: if isOwner();
+      allow update, delete: if isOwner();
+      allow create: if signedIn() && request.auth.uid == uid
+        && collegeActive(request.resource.data.collegeId)
+        && request.resource.data.keys().hasOnly(['collegeId','role','docId','code','createdAt'])
+        && (
+          (request.resource.data.role in ['warden','guard','worker']
+            && request.resource.data.docId == uid
+            && request.resource.data.code is string
+            && get(/databases/$(database)/documents/colleges/$(request.resource.data.collegeId)/settings/codes)
+                 .data[request.resource.data.role] == request.resource.data.code)
+          ||
+          (request.resource.data.role == 'student'
+            && exists(/databases/$(database)/documents/colleges/$(request.resource.data.collegeId)/students/$(request.resource.data.docId))
+            && get(/databases/$(database)/documents/colleges/$(request.resource.data.collegeId)/students/$(request.resource.data.docId))
+                 .data.get('hasAccount', false) == false)
+        );
+    }
+
+    // Owner-only: college onboarding requests (Phase 2)
+    match /collegeRequests/{id} {
+      allow create: if true;
+      allow read, update, delete: if isOwner();
+    }
+  }
+}

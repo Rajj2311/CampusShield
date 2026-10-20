@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:excel/excel.dart' hide Border;
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class ImportStudentsScreen extends StatefulWidget {
   const ImportStudentsScreen({super.key});
@@ -109,15 +110,14 @@ class _ImportStudentsScreenState extends State<ImportStudentsScreen> {
         continue;
       }
       try {
-        final existing = await FirebaseFirestore.instance
-            .collection('students')
+        final existing = await Tenant.col('students')
             .where('roll', isEqualTo: row['roll'])
             .limit(1).get();
         if (existing.docs.isNotEmpty) {
           setState(() => _failed++);
           continue;
         }
-        await FirebaseFirestore.instance.collection('students').add({
+        await Tenant.col('students').add({
           'name':           row['name'],
           'roll':           row['roll'],
           'room':           row['room'],

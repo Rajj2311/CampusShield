@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../utils/tenant.dart';
 
 class MessMenuScreen extends StatefulWidget {
   final bool isWarden;
@@ -46,7 +47,7 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
             child: ElevatedButton(
               onPressed: () async {
                 final items = ctrl.text.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-                await FirebaseFirestore.instance.collection('messMenuDays').doc('$_selectedDay').set(
+                await Tenant.col('messMenuDays').doc('$_selectedDay').set(
                   {mealKey: items.join(', ')}, SetOptions(merge: true));
                 if (ctx.mounted) Navigator.pop(ctx);
               },
@@ -96,7 +97,7 @@ class _MessMenuScreenState extends State<MessMenuScreen> {
           ])),
         const Divider(height: 1),
         Expanded(child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('messMenuDays').doc('$_selectedDay').snapshots(),
+          stream: Tenant.col('messMenuDays').doc('$_selectedDay').snapshots(),
           builder: (context, snap) {
             final overrideData = (snap.data?.exists ?? false) ? snap.data!.data() as Map<String, dynamic> : {};
             return ListView.builder(padding: const EdgeInsets.all(12), itemCount: 4,

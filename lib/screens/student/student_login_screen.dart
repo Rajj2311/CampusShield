@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'student_dashboard.dart';
 import 'student_register_screen.dart';
 import '../../utils/device_helper.dart';
+import '../../utils/tenant.dart';
 
 class StudentLoginScreen extends StatefulWidget {
   const StudentLoginScreen({super.key});
@@ -30,8 +31,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       }
 
       // Step 1 — Firestore se student fetch karo
-      final snap = await FirebaseFirestore.instance
-          .collection('students')
+      final snap = await Tenant.col('students')
           .where('roll', isEqualTo: roll)
           .limit(1).get();
 
@@ -73,8 +73,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
       if (boundDeviceId.isEmpty) {
         // Pehli baar login — device bind karo
-        await FirebaseFirestore.instance
-            .collection('students').doc(studentDoc.id).update({
+        await Tenant.col('students').doc(studentDoc.id).update({
           'boundDeviceId':   currentDeviceId,
           'boundDeviceName': currentDeviceName,
           'deviceBoundAt':   FieldValue.serverTimestamp(),
@@ -84,8 +83,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
       } else if (boundDeviceId != currentDeviceId) {
         // Different device — check karo koi pending request toh nahi
-        final pendingReq = await FirebaseFirestore.instance
-            .collection('deviceChangeRequests')
+        final pendingReq = await Tenant.col('deviceChangeRequests')
             .where('studentId', isEqualTo: studentDoc.id)
             .where('status', isEqualTo: 'pending')
             .limit(1).get();
@@ -103,8 +101,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         }
 
         // Warden ko request bhejo
-        final wardenSnap = await FirebaseFirestore.instance
-            .collection('wardens')
+        final wardenSnap = await Tenant.col('wardens')
             .where('hostelBlock',
                 isEqualTo: studentData['block'] ?? '')
             .limit(1).get();
@@ -112,8 +109,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         final wardenId = wardenSnap.docs.isNotEmpty
             ? wardenSnap.docs.first.id : '';
 
-        await FirebaseFirestore.instance
-            .collection('deviceChangeRequests').add({
+        await Tenant.col('deviceChangeRequests').add({
           'studentId':        studentDoc.id,
           'studentName':      studentData['name'],
           'roll':             roll,
@@ -130,8 +126,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
 
         // Warden ko notification
         if (wardenId.isNotEmpty) {
-          await FirebaseFirestore.instance
-              .collection('notifications')
+          await Tenant.col('notifications')
               .doc(wardenId)
               .collection('items').add({
             'title':     '📱 New Device Login Request',
@@ -253,8 +248,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
                 final roll = rollCtrl.text.trim().toUpperCase();
                 if (roll.isEmpty) return;
                 try {
-                  final snap = await FirebaseFirestore.instance
-                      .collection('students').where('roll', isEqualTo: roll).limit(1).get();
+                  final snap = await Tenant.col('students').where('roll', isEqualTo: roll).limit(1).get();
                   if (snap.docs.isEmpty) {
                     if (ctx.mounted) ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('❌ Roll number not found.'),

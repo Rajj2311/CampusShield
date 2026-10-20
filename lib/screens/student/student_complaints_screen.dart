@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../constants.dart';
 import '../../utils/image_upload_helper.dart';
+import '../../utils/tenant.dart';
 
 class StudentComplaintsScreen extends StatefulWidget {
   final Map<String, dynamic> studentData;
@@ -17,7 +17,7 @@ class StudentComplaintsScreen extends StatefulWidget {
 class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
   final _titleCtrl = TextEditingController();
   final _descCtrl  = TextEditingController();
-  String _category = 'Electrician';
+  late String _category = Tenant.workerCategories.first['label'] as String;
   XFile? _beforePhoto;
   bool   _isLoading = false;
 
@@ -43,22 +43,20 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
       // Find warden of this hostel
       final block = widget.studentData['block'] ?? '';
-      final wardenSnap = await FirebaseFirestore.instance
-          .collection('wardens')
+      final wardenSnap = await Tenant.col('wardens')
           .where('hostelBlock', isEqualTo: block)
           .limit(1).get();
       final wardenId = wardenSnap.docs.isNotEmpty ? wardenSnap.docs.first.id : '';
 
       // Find worker of this category (any hostel — workers serve all hostels)
-      final workerSnap = await FirebaseFirestore.instance
-          .collection('workers')
+      final workerSnap = await Tenant.col('workers')
           .where('category', isEqualTo: _category)
           .limit(1).get();
       final workerId   = workerSnap.docs.isNotEmpty ? workerSnap.docs.first.id : '';
       final workerName = workerSnap.docs.isNotEmpty
           ? (workerSnap.docs.first.data()['name'] ?? '') : 'Unassigned';
 
-      await FirebaseFirestore.instance.collection('complaints').add({
+      await Tenant.col('complaints').add({
         'title':        _titleCtrl.text.trim(),
         'description':  _descCtrl.text.trim(),
         'category':     _category,
@@ -99,7 +97,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
 
   // ── Verify Fix (student side) ────────────────────────────────────────
   Future<void> _verifyFix(String complaintId, bool isFixed) async {
-    await FirebaseFirestore.instance.collection('complaints').doc(complaintId).update({
+    await Tenant.col('complaints').doc(complaintId).update({
       'studentVerified': isFixed ? 'fixed' : 'not_fixed',
       'status': isFixed ? 'Closed' : 'Reopened',
       'closedAt': isFixed ? FieldValue.serverTimestamp() : null,
@@ -149,7 +147,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
               const SizedBox(height: 8),
               SizedBox(height: 40,
                 child: ListView(scrollDirection: Axis.horizontal,
-                  children: kWorkerCategories.map((cat) {
+                  children: Tenant.workerCategories.map((cat) {
                     final sel = _category == cat['label'];
                     return GestureDetector(
                       onTap: () => setState(() => _category = cat['label']),
@@ -232,7 +230,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
           const Text('My Complaints', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A3A5C))),
           const SizedBox(height: 12),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('complaints')
+            stream: Tenant.col('complaints')
                 .where('roll', isEqualTo: widget.studentData['roll'])
                 .orderBy('createdAt', descending: true)
                 .snapshots(),
@@ -256,7 +254,7 @@ class _StudentComplaintsScreenState extends State<StudentComplaintsScreen> {
                         color: color.withOpacity(0.08),
                         borderRadius: const BorderRadius.only(topLeft: Radius.circular(14), topRight: Radius.circular(14))),
                       child: Row(children: [
-                        Text(kWorkerCategories.firstWhere(
+                        Text(Tenant.workerCategories.firstWhere(
                           (c) => c['label'] == d['category'],
                           orElse: () => {'icon': '🔩'})['icon'] ?? '🔩',
                           style: const TextStyle(fontSize: 20)),

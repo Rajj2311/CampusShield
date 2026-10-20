@@ -3,6 +3,8 @@ import 'warden/warden_login_screen.dart';
 import 'student/student_login_screen.dart';
 import 'guard/guard_login_screen.dart';
 import 'worker/worker_login_screen.dart';
+import 'college_select_screen.dart';
+import '../utils/tenant.dart';
 
 class RoleSelectScreen extends StatelessWidget {
   const RoleSelectScreen({super.key});
@@ -19,7 +21,7 @@ class RoleSelectScreen extends StatelessWidget {
           const SizedBox(height: 24),
           const Text('CHOWKIDAR', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4)),
           const SizedBox(height: 8),
-          const Text('Smart Hostel Management', style: TextStyle(fontSize: 14, color: Color(0xFFF0A500))),
+          Text(Tenant.isSet ? Tenant.name : 'Smart Hostel Management', textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, color: Color(0xFFF0A500))),
           const SizedBox(height: 50),
           const Text('Login As', style: TextStyle(fontSize: 18, color: Colors.white70)),
           const SizedBox(height: 20),
@@ -64,6 +66,16 @@ class RoleSelectScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.12),
                 side: const BorderSide(color: Colors.white70, width: 1.5),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
+          const SizedBox(height: 20),
+          TextButton(
+            onPressed: () async {
+              await Tenant.clear();
+              if (context.mounted) {
+                Navigator.pushReplacement(context,
+                  MaterialPageRoute(builder: (_) => const CollegeSelectScreen()));
+              }
+            },
+            child: const Text('Change college', style: TextStyle(color: Colors.white54))),
         ]),
       )),
     );

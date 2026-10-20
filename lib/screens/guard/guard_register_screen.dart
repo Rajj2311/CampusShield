@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../constants.dart';
 import 'guard_dashboard.dart';
-import '../../utils/remote_config_helper.dart';
+import '../../utils/tenant.dart';
 
 class GuardRegisterScreen extends StatefulWidget {
   const GuardRegisterScreen({super.key});
@@ -25,11 +24,6 @@ class _GuardRegisterScreenState extends State<GuardRegisterScreen> {
       setState(() => _errorMessage = 'Fill all fields. Password must be at least 6 characters.');
       return;
     }
-    await RemoteConfigHelper.refresh();
-    if (_codeController.text.trim() != RemoteConfigHelper.guardCode) {
-      setState(() => _errorMessage = 'Invalid security code. Contact your warden.');
-      return;
-    }
     setState(() { _isLoading = true; _errorMessage = null; });
     try {
       final realEmail = _emailController.text.trim();
@@ -39,7 +33,15 @@ class _GuardRegisterScreenState extends State<GuardRegisterScreen> {
       }
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: realEmail, password: _passwordController.text.trim());
-      await FirebaseFirestore.instance.collection('guards').doc(cred.user!.uid).set({
+      try {
+        await Tenant.bindUser(uid: cred.user!.uid, role: 'guard',
+            docId: cred.user!.uid, code: _codeController.text.trim());
+      } on FirebaseException {
+        await cred.user!.delete();
+        setState(() => _errorMessage = 'Invalid security code. Contact your warden.');
+        return;
+      }
+      await Tenant.col('guards').doc(cred.user!.uid).set({
         'name': _nameController.text.trim(),
         'guardId': guardId,
         'email': realEmail,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../utils/tenant.dart';
 
 class ComplaintsScreen extends StatefulWidget {
   const ComplaintsScreen({super.key});
@@ -21,7 +22,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
   Future<void> _loadWardenHostel() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('wardens').doc(uid).get();
+    final doc = await Tenant.col('wardens').doc(uid).get();
     if (doc.exists) setState(() => _wardenHostel = doc.data()?['hostelBlock']);
   }
 
@@ -60,7 +61,7 @@ class _ComplaintsScreenState extends State<ComplaintsScreen> {
         ]),
         iconTheme: const IconThemeData(color: Colors.white)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('complaints')
+        stream: Tenant.col('complaints')
             .where('hostelBlock', isEqualTo: _wardenHostel)
             .orderBy('createdAt', descending: true)
             .snapshots(),

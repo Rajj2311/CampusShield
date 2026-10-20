@@ -45,3 +45,11 @@ app.*.map.json
 /android/app/release
 # Firebase configuration
 android/app/google-services.json
+# secrets — never commit
+serviceAccount.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+functions/node_modules/
+.dart_tool/
+build/
+android/.kotlin/

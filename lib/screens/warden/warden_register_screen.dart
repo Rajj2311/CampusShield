@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../constants.dart';
 import 'warden_dashboard.dart';
-import '../../utils/remote_config_helper.dart';
+import '../../utils/tenant.dart';
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
   @override
@@ -16,19 +15,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _codeController     = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-  String _selectedHostel = 'CET Boys';
+  late String _selectedHostel = Tenant.hostels.first;
   Future<void> _register() async {
     if (_nameController.text.trim().isEmpty) { setState(() => _errorMessage = 'Please enter your name.'); return; }
-    await RemoteConfigHelper.refresh(); // Fresh code fetch karo
-    if (_codeController.text.trim() != RemoteConfigHelper.wardenCode) {
-      setState(() => _errorMessage = 'Invalid admin code. Contact college administration.');
-      return;
-    }
     setState(() { _isLoading = true; _errorMessage = null; });
     try {
       final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(), password: _passwordController.text.trim());
-      await FirebaseFirestore.instance.collection('wardens').doc(cred.user!.uid).set({
+      try {
+        await Tenant.bindUser(uid: cred.user!.uid, role: 'warden',
+            docId: cred.user!.uid, code: _codeController.text.trim());
+      } on FirebaseException {
+        await cred.user!.delete();
+        setState(() => _errorMessage = 'Invalid admin code. Contact college administration.');
+        return;
+      }
+      await Tenant.col('wardens').doc(cred.user!.uid).set({
         'name': _nameController.text.trim(), 'email': _emailController.text.trim(),
         'role': 'Warden', 'hostelBlock': _selectedHostel,
         'createdAt': FieldValue.serverTimestamp(),
@@ -94,7 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 prefixIcon: const Icon(Icons.home_work_outlined, color: Color(0xFF1A3A5C)),
                 filled: true, fillColor: Colors.white,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none)),
-              items: kHostelBlocks.map((h) => DropdownMenuItem(value: h, child: Text(h, style: const TextStyle(fontSize: 14)))).toList(),
+              items: Tenant.hostels.map((h) => DropdownMenuItem(value: h, child: Text(h, style: const TextStyle(fontSize: 14)))).toList(),
               onChanged: (val) => setState(() => _selectedHostel = val!),
             )),
           if (_errorMessage != null) ...[

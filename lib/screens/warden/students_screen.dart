@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../constants.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class StudentsScreen extends StatefulWidget {
   const StudentsScreen({super.key});
@@ -135,8 +135,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                 onPressed: () async {
                   if (nameCtrl.text.trim().isEmpty ||
                       rollCtrl.text.trim().isEmpty) return;
-                  await FirebaseFirestore.instance
-                      .collection('students').add({
+                  await Tenant.col('students').add({
                     'name':           nameCtrl.text.trim(),
                     'roll':           rollCtrl.text.trim().toUpperCase(),
                     'room':           roomCtrl.text.trim(),
@@ -187,8 +186,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
             onPressed: () => _showAddStudent(context)),
         ]),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('students')
+        stream: Tenant.col('students')
             .where('block', isEqualTo: _wardenHostel)
             .snapshots(),
         builder: (context, snap) {
@@ -299,8 +297,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   child: const Text('Cancel')),
                                 TextButton(
                                   onPressed: () {
-                                    FirebaseFirestore.instance
-                                        .collection('students')
+                                    Tenant.col('students')
                                         .doc(doc.id).delete();
                                     Navigator.pop(context);
                                   },

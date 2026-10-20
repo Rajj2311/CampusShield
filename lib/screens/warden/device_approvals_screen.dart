@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/warden_helper.dart';
+import '../../utils/tenant.dart';
 
 class DeviceApprovalsScreen extends StatefulWidget {
   const DeviceApprovalsScreen({super.key});
@@ -30,7 +31,7 @@ class _DeviceApprovalsScreenState
 
     // Student ka device update karo
     batch.update(
-      FirebaseFirestore.instance.collection('students').doc(studentId),
+      Tenant.col('students').doc(studentId),
       {
         'boundDeviceId':   newDeviceId,
         'boundDeviceName': newDeviceName,
@@ -39,8 +40,7 @@ class _DeviceApprovalsScreenState
 
     // Request close karo
     batch.update(
-      FirebaseFirestore.instance
-          .collection('deviceChangeRequests').doc(reqId),
+      Tenant.col('deviceChangeRequests').doc(reqId),
       {
         'status':     'approved',
         'resolvedAt': FieldValue.serverTimestamp(),
@@ -49,8 +49,7 @@ class _DeviceApprovalsScreenState
     await batch.commit();
 
     // Student ko notification
-    await FirebaseFirestore.instance
-        .collection('notifications')
+    await Tenant.col('notifications')
         .doc(studentId)
         .collection('items').add({
       'title':     '✅ Device Change Approved!',
@@ -67,14 +66,12 @@ class _DeviceApprovalsScreenState
   }
 
   Future<void> _reject(String reqId, String studentId) async {
-    await FirebaseFirestore.instance
-        .collection('deviceChangeRequests').doc(reqId).update({
+    await Tenant.col('deviceChangeRequests').doc(reqId).update({
       'status':     'rejected',
       'resolvedAt': FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance
-        .collection('notifications')
+    await Tenant.col('notifications')
         .doc(studentId)
         .collection('items').add({
       'title':     '❌ Device Change Rejected',
@@ -109,8 +106,7 @@ class _DeviceApprovalsScreenState
         ]),
         iconTheme: const IconThemeData(color: Colors.white)),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('deviceChangeRequests')
+        stream: Tenant.col('deviceChangeRequests')
             .where('block', isEqualTo: _wardenHostel)
             .where('status', isEqualTo: 'pending')
             .snapshots(),

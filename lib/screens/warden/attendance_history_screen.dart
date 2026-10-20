@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../utils/tenant.dart';
 
 class AttendanceHistoryScreen extends StatefulWidget {
   final String hostelBlock;
@@ -31,8 +32,7 @@ class _AttendanceHistoryScreenState extends State<AttendanceHistoryScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('attendanceHistory')
+        stream: Tenant.col('attendanceHistory')
             .where('hostelBlock', isEqualTo: widget.hostelBlock)
             .orderBy('createdAt', descending: true)
             .snapshots(),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../constants.dart';
 import 'attendance_history_screen.dart';
+import '../../utils/tenant.dart';
 
 class AttendanceScreen extends StatefulWidget {
   const AttendanceScreen({super.key});
@@ -24,9 +24,9 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<void> _loadWardenAndReset() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final doc = await FirebaseFirestore.instance.collection('wardens').doc(uid).get();
+    final doc = await Tenant.col('wardens').doc(uid).get();
     if (!doc.exists) return;
-    final hostel = doc.data()?['hostelBlock'] ?? kHostelBlocks[0];
+    final hostel = doc.data()?['hostelBlock'] ?? Tenant.hostels[0];
     setState(() => _wardenHostel = hostel);
     await _dailyReset();
   }
@@ -34,15 +34,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   // ── Daily Reset Logic ───────────────────────────────────────────────
   Future<void> _dailyReset() async {
     final today = _todayStr();
-    final resetDoc = await FirebaseFirestore.instance
-        .collection('settings').doc('attendanceReset').get();
+    final resetDoc = await Tenant.col('settings').doc('attendanceReset').get();
     final lastReset = resetDoc.data()?['date'] ?? '';
     if (lastReset == today) {
       setState(() => _resetDone = true);
       return;
     }
 
-    final students = await FirebaseFirestore.instance.collection('students').get();
+    final students = await Tenant.col('students').get();
     final docs = students.docs;
 
     // ── 500 ki chunks mein batch karo (Firestore limit) ──────────
@@ -60,8 +59,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       await batch.commit();
     }
 
-    await FirebaseFirestore.instance
-        .collection('settings')
+    await Tenant.col('settings')
         .doc('attendanceReset')
         .set({'date': today, 'resetAt': FieldValue.serverTimestamp()});
 
@@ -82,7 +80,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   Future<void> _cycleStatus(DocumentSnapshot doc) async {
     final current = (doc.data() as Map)['todayStatus'] ?? 'absent';
     final next = current == 'present' ? 'absent' : current == 'absent' ? 'leave' : 'present';
-    await FirebaseFirestore.instance.collection('students').doc(doc.id).update({'todayStatus': next});
+    await Tenant.col('students').doc(doc.id).update({'todayStatus': next});
   }
 
   // ── Submit + Save History ───────────────────────────────────────────
@@ -108,7 +106,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final leave   = records.where((r) => r['status'] == 'leave').length;
 
     // Save to attendanceHistory
-    await FirebaseFirestore.instance.collection('attendanceHistory').add({
+    await Tenant.col('attendanceHistory').add({
       'date': today,
       'hostelBlock': _wardenHostel ?? 'Unknown',
       'submittedBy': uid,
@@ -120,7 +118,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance.collection('activity').add({
+    await Tenant.col('activity').add({
       'title': 'Attendance submitted for ${_wardenHostel ?? 'hostel'} — $present present, $absent absent',
       'time': 'Just now', 'createdAt': FieldValue.serverTimestamp(),
     });
@@ -138,7 +136,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         body: Center(child: CircularProgressIndicator(color: Color(0xFF1A3A5C))));
     }
 
-    Query query = FirebaseFirestore.instance.collection('students')
+    Query query = Tenant.col('students')
         .where('block', isEqualTo: _wardenHostel);
 
     return Scaffold(

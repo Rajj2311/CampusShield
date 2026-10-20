@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../utils/tenant.dart';
 
 class GateHistoryScreen extends StatefulWidget {
   final String hostelBlock;
@@ -82,13 +83,11 @@ class _GateHistoryScreenState extends State<GateHistoryScreen> {
 
         Expanded(child: StreamBuilder<QuerySnapshot>(
           stream: _filter == 'All'
-            ? FirebaseFirestore.instance
-                .collection('gateHistory')
+            ? Tenant.col('gateHistory')
                 .where('hostelBlock', isEqualTo: widget.hostelBlock)
                 .orderBy('createdAt', descending: true)
                 .snapshots()
-            : FirebaseFirestore.instance
-                .collection('gateHistory')
+            : Tenant.col('gateHistory')
                 .where('hostelBlock', isEqualTo: widget.hostelBlock)
                 .where('action', isEqualTo: _filter)
                 .orderBy('createdAt', descending: true)

@@ -9,6 +9,7 @@ import 'student_notices_screen.dart';
 import '../shared/mess_menu_screen.dart';
 import 'student_profile_screen.dart';
 import '../../widgets/notification_bell.dart';
+import '../../utils/tenant.dart';
 
 class StudentDashboard extends StatefulWidget {
   final Map<String, dynamic> studentData;
@@ -217,8 +218,7 @@ class _HomeTab extends StatelessWidget {
 
           // ── Today's Attendance ───────────────────────────────────
           StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('students').doc(studentId).snapshots(),
+            stream: Tenant.col('students').doc(studentId).snapshots(),
             builder: (context, snap) {
               final status = (snap.data?.data()
                   as Map<String, dynamic>?)?['todayStatus'] ?? 'absent';
@@ -263,8 +263,7 @@ class _HomeTab extends StatelessWidget {
             stream: () {
               final n = DateTime.now();
               final dayIndex = n.weekday - 1;
-              return FirebaseFirestore.instance
-                  .collection('messMenuDays')
+              return Tenant.col('messMenuDays')
                   .doc('$dayIndex')
                   .snapshots();
             }(),
@@ -320,8 +319,7 @@ class _HomeTab extends StatelessWidget {
             ]),
           const SizedBox(height: 8),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('notices')
+            stream: Tenant.col('notices')
                 .where('hostelBlock', isEqualTo: block)
                 .limit(3)
                 .snapshots(),

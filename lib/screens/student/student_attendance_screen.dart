@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:io' as io;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../utils/campus_geofence_helper.dart';
+import '../../utils/tenant.dart';
 
 class StudentAttendanceScreen extends StatefulWidget {
   final String studentId;
@@ -25,22 +26,28 @@ class _StudentAttendanceScreenState extends State<StudentAttendanceScreen> {
 
   bool _isAttendanceTime() {
     final now = DateTime.now();
-    return now.hour == 20 || (now.hour == 20 && now.minute >= 0) && now.hour < 21;
-    // 8 PM to 9 PM
+    return now.hour >= Tenant.attendanceStartHour && now.hour < Tenant.attendanceEndHour;
   }
+
+  String _hourLabel(int h) {
+    final h12 = h % 12 == 0 ? 12 : h % 12;
+    return '$h12:00 ${h >= 12 && h < 24 ? 'PM' : 'AM'}';
+  }
+
+  String get _windowLabel =>
+      '${_hourLabel(Tenant.attendanceStartHour)} and ${_hourLabel(Tenant.attendanceEndHour)}';
 
   Future<void> _markAttendance() async {
     // Time check
     final now = DateTime.now();
-    if (now.hour < 20 || now.hour >= 21) {
-      setState(() { _message = '⏰ Attendance can only be marked between 8:00 PM and 9:00 PM!'; _isSuccess = false; });
+    if (!_isAttendanceTime()) {
+      setState(() { _message = '⏰ Attendance can only be marked between $_windowLabel!'; _isSuccess = false; });
       return;
     }
 
     // Check already marked today
     final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    final existing = await FirebaseFirestore.instance
-        .collection('attendanceRecords')
+    final existing = await Tenant.col('attendanceRecords')
         .where('studentId', isEqualTo: widget.studentId)
         .where('date', isEqualTo: today)
         .get();
@@ -101,7 +108,7 @@ if (position.isMocked) {
       setState(() => _capturedImage = photo);
 
       // Save attendance
-      await FirebaseFirestore.instance.collection('attendanceRecords').add({
+      await Tenant.col('attendanceRecords').add({
         'studentId': widget.studentId,
         'studentName': widget.studentData['name'],
         'roll': widget.studentData['roll'],
@@ -116,7 +123,7 @@ if (position.isMocked) {
       });
 
       // Update today status
-      await FirebaseFirestore.instance.collection('students').doc(widget.studentId).update({'todayStatus': 'present'});
+      await Tenant.col('students').doc(widget.studentId).update({'todayStatus': 'present'});
 
       setState(() { _message = '✅ Attendance marked successfully! You are inside the campus.'; _isSuccess = true; });
     } catch (e) {
@@ -135,7 +142,7 @@ if (position.isMocked) {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final isTime = now.hour >= 20 && now.hour < 21;
+    final isTime = _isAttendanceTime();
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(backgroundColor: const Color(0xFF1A3A5C),
@@ -157,7 +164,7 @@ if (position.isMocked) {
                 Text(isTime ? 'Attendance Window Open! ✅' : 'Attendance Window Closed',
                   style: TextStyle(fontWeight: FontWeight.bold,
                     color: isTime ? const Color(0xFF2E7D32) : const Color(0xFFF0A500))),
-                Text('Time: 8:00 PM – 9:00 PM only', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('Time: ${_hourLabel(Tenant.attendanceStartHour)} – ${_hourLabel(Tenant.attendanceEndHour)} only', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 Text('Current time: ${now.hour}:${now.minute.toString().padLeft(2, '0')}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ])),
             ])),
@@ -173,7 +180,7 @@ if (position.isMocked) {
                 Text('Location Requirements', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A3A5C))),
               ]),
               const SizedBox(height: 8),
-              const Text('📍 IILM University, Greater Noida', style: TextStyle(fontSize: 13)),
+              Text('📍 ${Tenant.name}', style: const TextStyle(fontSize: 13)),
               const Text('📏 Must be inside campus boundary', style: TextStyle(fontSize: 13)),
               const Text('📸 Photo proof required', style: TextStyle(fontSize: 13)),
               const Text('🧑\u200d💻 Live face verification required', style: TextStyle(fontSize: 13)),
@@ -220,7 +227,7 @@ if (position.isMocked) {
             child: Text('Attendance History', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A3A5C)))),
           const SizedBox(height: 10),
           StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance.collection('attendanceRecords')
+            stream: Tenant.col('attendanceRecords')
                 .where('studentId', isEqualTo: widget.studentId)
                 .orderBy('createdAt', descending: true)
                 .limit(10)
