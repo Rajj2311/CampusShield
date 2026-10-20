@@ -4,6 +4,7 @@ import 'student/student_login_screen.dart';
 import 'guard/guard_login_screen.dart';
 import 'worker/worker_login_screen.dart';
 import 'college_select_screen.dart';
+import 'college/college_admin_login_screen.dart';
 import '../utils/tenant.dart';
 
 class RoleSelectScreen extends StatelessWidget {
@@ -66,7 +67,13 @@ class RoleSelectScreen extends StatelessWidget {
               style: ElevatedButton.styleFrom(backgroundColor: Colors.white.withOpacity(0.12),
                 side: const BorderSide(color: Colors.white70, width: 1.5),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))))),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          TextButton.icon(
+            onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (_) => const CollegeAdminLoginScreen())),
+            icon: const Icon(Icons.apartment, color: Colors.white70),
+            label: const Text('College Admin', style: TextStyle(color: Colors.white70))),
+          const SizedBox(height: 4),
           TextButton(
             onPressed: () async {
               await Tenant.clear();

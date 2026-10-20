@@ -30,7 +30,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         return;
       }
 
-      // Step 1 — Firestore se student fetch karo
+      // Step 1: fetch the student from Firestore
       final snap = await Tenant.col('students')
           .where('roll', isEqualTo: roll)
           .limit(1).get();
@@ -72,7 +72,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
       final boundDeviceId     = (studentData['boundDeviceId'] ?? '').toString();
 
       if (boundDeviceId.isEmpty) {
-        // Pehli baar login — device bind karo
+        // First login: bind this device
         await Tenant.col('students').doc(studentDoc.id).update({
           'boundDeviceId':   currentDeviceId,
           'boundDeviceName': currentDeviceName,
@@ -82,14 +82,14 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         studentData['boundDeviceName'] = currentDeviceName;
 
       } else if (boundDeviceId != currentDeviceId) {
-        // Different device — check karo koi pending request toh nahi
+        // Different device: check for an existing pending request
         final pendingReq = await Tenant.col('deviceChangeRequests')
             .where('studentId', isEqualTo: studentDoc.id)
             .where('status', isEqualTo: 'pending')
             .limit(1).get();
 
         if (pendingReq.docs.isNotEmpty) {
-          // Already pending request hai
+          // A request is already pending
           await FirebaseAuth.instance.signOut();
           setState(() {
             _errorMessage =
@@ -100,7 +100,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           return;
         }
 
-        // Warden ko request bhejo
+        // Send the request to the warden
         final wardenSnap = await Tenant.col('wardens')
             .where('hostelBlock',
                 isEqualTo: studentData['block'] ?? '')
@@ -124,7 +124,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
           'requestedAt':      FieldValue.serverTimestamp(),
         });
 
-        // Warden ko notification
+        // Notify the warden
         if (wardenId.isNotEmpty) {
           await Tenant.col('notifications')
               .doc(wardenId)
@@ -145,7 +145,7 @@ class _StudentLoginScreenState extends State<StudentLoginScreen> {
         return;
       }
 
-      // Step 4 — Dashboard pe jaao
+      // Step 4: go to the dashboard
       if (mounted) Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (_) => StudentDashboard(
           studentData: studentData,

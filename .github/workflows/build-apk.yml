@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APKs
 
 on:
   pull_request:
@@ -7,16 +7,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  main-app:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          sudo docker image prune --all --force || true
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android/sdk/ndk /usr/local/.ghcup || true
           df -h /
-
-      - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
@@ -33,18 +32,61 @@ jobs:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
           python3 - <<'PY'
-          import os, json
-          s = os.environ["GOOGLE_SERVICES_JSON"]
-          obj, _ = json.JSONDecoder().raw_decode(s[s.index("{"):])
-          with open("android/app/google-services.json", "w") as f:
-              json.dump(obj, f)
-          print("google-services.json OK, project:", obj["project_info"]["project_id"])
+          import json, os
+          raw = os.environ["GOOGLE_SERVICES_JSON"].strip()
+          obj, _ = json.JSONDecoder().raw_decode(raw)
+          json.dump(obj, open("android/app/google-services.json", "w"))
           PY
 
       - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter build apk --debug --target-platform android-arm64
 
       - uses: actions/upload-artifact@v4
         with:
           name: chowkidar-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
+
+  owner-app:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: owner_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android/sdk/ndk /usr/local/.ghcup || true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          raw = os.environ["GOOGLE_SERVICES_JSON"].strip()
+          obj, _ = json.JSONDecoder().raw_decode(raw)
+          json.dump(obj, open("android/app/google-services.json", "w"))
+          PY
+
+      - name: Fill in missing Flutter project files
+        run: flutter create --platforms=android --org com.example --project-name chowkidar_owner .
+      - run: flutter pub get
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - run: flutter build apk --debug --target-platform android-arm64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chowkidar-owner-debug-apk
+          path: owner_app/build/app/outputs/flutter-apk/app-debug.apk

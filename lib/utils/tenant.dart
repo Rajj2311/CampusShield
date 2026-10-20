@@ -101,6 +101,13 @@ class Tenant {
     }
   }
 
+  /// Re-reads the active college profile (after an admin changes settings).
+  static Future<void> reload() async {
+    final snap = await doc.get();
+    final data = snap.data();
+    if (data != null) _config = data;
+  }
+
   /// Restores the last used college (before login).
   static Future<bool> restore() async {
     if (_id != null) return true;

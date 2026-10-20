@@ -18,10 +18,10 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
   IconData _resultIcon   = Icons.qr_code_scanner;
 
   Future<void> _handleScan(String qrToken) async {
-    // Agar already processing ho toh skip karo
+    // Skip if already processing
     if (_isProcessing) return;
 
-    // Scanner turant stop karo — double scan rokne ke liye
+    // Stop the scanner immediately to prevent double scans
     await _controller.stop();
     setState(() { _isProcessing = true; _resultMessage = null; });
 
@@ -69,7 +69,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
           'guardIdExit':   widget.guardName,
         });
 
-        // ── Student attendance 'leave' pe set karo ──────────
+        // Set the student's attendance to 'leave'
         await Tenant.col('students')
             .where('roll', isEqualTo: d['roll'])
             .limit(1).get()
@@ -91,7 +91,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
       } else if (gateStatus == 'out') {
         // ── SECOND SCAN = RETURN ───────────────────────────
 
-        // Late return check karo
+        // Check for late return
         final toTimestamp = d['toTimestamp'] as int?;
         bool isLate = false;
         if (toTimestamp != null) {
@@ -111,7 +111,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
             'Warden approval required.',
             const Color(0xFFF0A500), Icons.warning_amber);
         } else {
-          // Normal return — directly complete karo
+          // Normal return: complete directly
           String duration = '';
           final exitTs = d['exitTimestamp'];
           if (exitTs != null) {
@@ -173,7 +173,7 @@ class _GuardScanScreenState extends State<GuardScanScreen> {
       _isProcessing  = false;
     });
 
-    // 4 second baad result hide karo aur scanner resume karo
+    // After 4 seconds, hide the result and resume the scanner
     Future.delayed(const Duration(seconds: 4), () {
       if (!mounted) return;
       setState(() => _resultMessage = null);

@@ -29,7 +29,7 @@ class _DeviceApprovalsScreenState
       String newDeviceId, String newDeviceName) async {
     final batch = FirebaseFirestore.instance.batch();
 
-    // Student ka device update karo
+    // Update the student's device
     batch.update(
       Tenant.col('students').doc(studentId),
       {
@@ -38,7 +38,7 @@ class _DeviceApprovalsScreenState
         'deviceBoundAt':   FieldValue.serverTimestamp(),
       });
 
-    // Request close karo
+    // Close the request
     batch.update(
       Tenant.col('deviceChangeRequests').doc(reqId),
       {
@@ -48,7 +48,7 @@ class _DeviceApprovalsScreenState
 
     await batch.commit();
 
-    // Student ko notification
+    // Notify the student
     await Tenant.col('notifications')
         .doc(studentId)
         .collection('items').add({

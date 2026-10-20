@@ -44,14 +44,14 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     final students = await Tenant.col('students').get();
     final docs = students.docs;
 
-    // ── 500 ki chunks mein batch karo (Firestore limit) ──────────
+    // Batch in chunks of 500 (Firestore limit)
     const chunkSize = 499;
     for (int i = 0; i < docs.length; i += chunkSize) {
       final chunk = docs.sublist(
         i, (i + chunkSize) > docs.length ? docs.length : i + chunkSize);
       final batch = FirebaseFirestore.instance.batch();
       for (final s in chunk) {
-        // Leave pe gaye students ko reset mat karo
+        // Do not reset students who are on leave
         if ((s.data()['todayStatus'] ?? 'absent') != 'leave') {
           batch.update(s.reference, {'todayStatus': 'absent'});
         }

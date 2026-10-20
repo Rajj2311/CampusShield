@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../utils/tenant.dart';
 import 'role_select_screen.dart';
+import 'college/college_register_screen.dart';
+import 'college/college_admin_login_screen.dart';
 
 /// First screen on a fresh install: the user enters their college code
 /// (e.g. "iilm"). Colleges are created/approved by the app owner.
@@ -92,8 +94,25 @@ class _CollegeSelectScreenState extends State<CollegeSelectScreen> {
                               color: Color(0xFF1A3A5C))),
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text('Code aapke college administration se milega.',
+              const SizedBox(height: 28),
+              const Divider(color: Colors.white24),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const CollegeRegisterScreen())),
+                icon: const Icon(Icons.add_business, color: Color(0xFFF0A500)),
+                label: const Text('Register your college',
+                    style: TextStyle(color: Color(0xFFF0A500), fontWeight: FontWeight.bold)),
+              ),
+              TextButton.icon(
+                onPressed: () => Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const CollegeAdminLoginScreen())),
+                icon: const Icon(Icons.admin_panel_settings, color: Colors.white70),
+                label: const Text('College admin login',
+                    style: TextStyle(color: Colors.white70)),
+              ),
+              const SizedBox(height: 12),
+              const Text('Ask your college administration for the college code.',
                   style: TextStyle(color: Colors.white54, fontSize: 12)),
             ]),
           ),

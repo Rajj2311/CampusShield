@@ -16,6 +16,18 @@ Chowkidar is now **multi-tenant**: one app + one Firebase project serve many col
 3. `firebase deploy --only firestore:rules,functions`
 4. Run `flutter pub get && flutter analyze`.
 
+## Phase 2: college self-registration + Owner app
+- A college registers in the main app (**Register your college**) -> `collegeRequests/{uid}` (status `pending`).
+- The owner approves it in `owner_app/` (login with the account that has the `superAdmin` claim). Approval creates `colleges/{code}`, the staff codes (`settings/codes`), the admin's `userIndex` entry (role `admin`) and marks the request approved.
+- The college admin logs in (**College admin login**) and gets the Admin dashboard: overview counts, hostels, registration codes (warden/guard/worker) and wardens, attendance window.
+- Wardens register with the warden code; guards and workers with their codes.
+- Owner can suspend/reactivate a college and keep private billing notes (`settings/billing`).
+
+### Owner app setup
+1. Firebase console -> Project settings -> Add app -> Android, package `com.example.chowkidar_owner`.
+2. Download the new `google-services.json` (it now contains both apps) and put its content in the `GOOGLE_SERVICES_JSON` GitHub secret.
+3. `firebase deploy --only firestore:rules`
+4. Push; GitHub Actions builds `chowkidar-debug-apk` (main) and `chowkidar-owner-debug-apk` (owner).
+
 ## Roadmap
-- Phase 2: college self-registration (`collegeRequests`), separate **Owner app** (approve / suspend / stats / payments), per-college logo and theme, per-role Firestore rules.
-- Phase 3: push notifications, Razorpay, lost & found, emergency alert.
+- Per-college logo and theme, per-role Firestore rules.

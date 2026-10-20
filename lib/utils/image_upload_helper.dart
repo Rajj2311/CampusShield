@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 class ImageUploadHelper {
   static final _picker = ImagePicker();
 
-  // Camera se photo lo
+  // Take a photo with the camera
   static Future<XFile?> pickFromCamera() async {
     final xFile = await _picker.pickImage(
       source: ImageSource.camera,
@@ -17,7 +17,7 @@ class ImageUploadHelper {
     return xFile;
   }
 
-  // Gallery se photo lo
+  // Pick a photo from the gallery
   static Future<XFile?> pickFromGallery() async {
     final xFile = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -27,7 +27,7 @@ class ImageUploadHelper {
     return xFile;
   }
 
-  // Firebase Storage pe upload karo
+  // Upload to Firebase Storage
   static Future<String> uploadImage(XFile file, String folder) async {
     final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
     final ref = FirebaseStorage.instance.ref().child('$folder/$fileName');
@@ -41,7 +41,7 @@ class ImageUploadHelper {
     }
   }
 
-  // Camera ya Gallery — user se choice lo
+  // Camera or gallery: let the user choose
   static Future<XFile?> showPickerDialog(context) async {
     XFile? picked;
     await showModalBottomSheet(

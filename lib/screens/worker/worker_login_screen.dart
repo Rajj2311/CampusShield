@@ -28,7 +28,7 @@ class _WorkerLoginScreenState extends State<WorkerLoginScreen> {
       return;
     }
 
-    // ✅ Step 1: Firestore se real email fetch karo
+    // Step 1: fetch the real email from Firestore
     final snap = await Tenant.col('workers')
         .where('workerId', isEqualTo: workerId)
         .limit(1)
@@ -53,7 +53,7 @@ class _WorkerLoginScreenState extends State<WorkerLoginScreen> {
       return;
     }
 
-    // ✅ Step 2: Real email se login karo
+    // Step 2: sign in with the real email
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: realEmail,
       password: _passCtrl.text.trim(),

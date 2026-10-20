@@ -8,6 +8,8 @@ import 'student/student_dashboard.dart';
 import 'warden/warden_dashboard.dart';
 import 'guard/guard_dashboard.dart';
 import 'worker/worker_dashboard.dart';
+import 'admin/admin_dashboard.dart';
+import 'college/request_status_screen.dart';
 
 // ───── AUTH GATE (Auto-Login Checker) ─────
 // Signed-in user -> userIndex/{uid} -> college + role + doc id.
@@ -40,6 +42,13 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           .collection('userIndex').doc(user.uid).get();
       final idx = idxSnap.data();
       if (idx == null) {
+        // Not linked to a college yet: maybe a pending college request.
+        final req = await FirebaseFirestore.instance
+            .collection('collegeRequests').doc(user.uid).get();
+        if (req.exists) {
+          _goTo(const RequestStatusScreen());
+          return;
+        }
         problem = 'Your account is not linked to any college.';
       } else {
         final err = await Tenant.load(idx['collegeId'] as String);
@@ -67,6 +76,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
   Future<Widget?> _screenFor(String role, String docId) async {
     switch (role) {
+      case 'admin':
+        return const AdminDashboard();
       case 'warden':
         final d = await Tenant.col('wardens').doc(docId).get();
         return d.exists ? const WardenDashboard() : null;

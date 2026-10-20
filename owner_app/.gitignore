@@ -1,0 +1,9 @@
+.dart_tool/
+build/
+.flutter-plugins*
+.packages
+pubspec.lock
+android/local.properties
+android/app/google-services.json
+android/.gradle/
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java

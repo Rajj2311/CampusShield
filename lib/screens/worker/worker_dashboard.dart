@@ -35,7 +35,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
 
   // ── Mark Resolved with Proof Photo ───────────────────────────────────
   Future<void> _markResolved(String docId) async {
-    // Photo optional — Storage enable hone ke baad mandatory karenge
+    // Photo is optional; it becomes mandatory once Storage is enabled
     await Tenant.col('complaints').doc(docId).update({
   'afterPhotoUrl': null,
 

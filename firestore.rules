@@ -17,10 +17,11 @@ service cloud.firestore {
     function isMember(c) { return hasIdx() && idx().collegeId == c && collegeActive(c); }
     function roleIs(c, r) { return isMember(c) && idx().role == r; }
     function isStaff(c)   { return isMember(c) && idx().role in ['warden', 'guard']; }
+    function isAdmin(c)   { return roleIs(c, 'admin'); }
 
     function generic(col, docId) {
       return !(col in ['students', 'guards', 'workers', 'wardens'])
-          && !(col == 'settings' && docId == 'codes');
+          && !(col == 'settings' && docId in ['codes', 'billing']);
     }
 
     // ───────── owner-managed college profiles ─────────
@@ -28,12 +29,21 @@ service cloud.firestore {
     // college-code screen works before login. Only the app owner writes.
     match /colleges/{c} {
       allow get: if true;
-      allow list, write: if isOwner();
+      allow list, create, delete: if isOwner();
+      // The college admin may change only customisation fields (never status).
+      allow update: if isOwner()
+        || (isAdmin(c) && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['hostels', 'workerCategories', 'geofence',
+                        'attendanceStartHour', 'attendanceEndHour', 'logoUrl']));
+
+      // Owner-only billing notes.
+      match /settings/billing {
+        allow read, write: if isOwner();
+      }
 
       // Role registration codes: never readable by students/guards/workers.
       match /settings/codes {
-        allow read: if roleIs(c, 'warden') || isOwner();
-        allow write: if roleIs(c, 'warden') || isOwner();
+        allow read, write: if roleIs(c, 'warden') || isAdmin(c) || isOwner();
       }
 
       // Login lookups happen BEFORE sign-in (roll / guardId / workerId -> email).
@@ -64,7 +74,8 @@ service cloud.firestore {
         allow read: if isMember(c) || isOwner();
         allow create: if signedIn() && request.auth.uid == id && hasIdx()
                       && idx().collegeId == c && idx().role == 'warden';
-        allow update, delete: if (signedIn() && request.auth.uid == id && isMember(c)) || isOwner();
+        allow update, delete: if (signedIn() && request.auth.uid == id && isMember(c))
+                              || isAdmin(c) || isOwner();
       }
 
       // Everything else in a college: members only (per-role tightening is Phase 2).
@@ -86,8 +97,15 @@ service cloud.firestore {
     match /userIndex/{uid} {
       allow get: if signedIn() && (request.auth.uid == uid || isOwner());
       allow list: if isOwner();
-      allow update, delete: if isOwner();
-      allow create: if signedIn() && request.auth.uid == uid
+      allow update: if isOwner();
+      // Owner, or the college admin removing a non-admin user of their own college.
+      allow delete: if isOwner()
+        || (hasIdx() && idx().role == 'admin'
+            && idx().collegeId == resource.data.collegeId
+            && resource.data.role != 'admin'
+            && collegeActive(idx().collegeId));
+      // The owner creates the admin's index when approving a college.
+      allow create: if isOwner() || signedIn() && request.auth.uid == uid
         && collegeActive(request.resource.data.collegeId)
         && request.resource.data.keys().hasOnly(['collegeId','role','docId','code','createdAt'])
         && (
@@ -104,10 +122,18 @@ service cloud.firestore {
         );
     }
 
-    // Owner-only: college onboarding requests (Phase 2)
+    // College onboarding requests: the applicant creates and reads their own;
+    // only the app owner can approve/reject (update) them.
     match /collegeRequests/{id} {
-      allow create: if true;
-      allow read, update, delete: if isOwner();
+      allow create: if signedIn() && request.auth.uid == id
+        && request.resource.data.status == 'pending'
+        && request.resource.data.keys().hasOnly(['collegeName','collegeCode','city',
+             'adminName','phone','email','hostels','status','createdAt']);
+      allow get: if signedIn() && (request.auth.uid == id || isOwner());
+      allow list: if isOwner();
+      allow update: if isOwner();
+      allow delete: if isOwner()
+        || (signedIn() && request.auth.uid == id && resource.data.status == 'rejected');
     }
   }
 }

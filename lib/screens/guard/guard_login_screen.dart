@@ -28,9 +28,8 @@ class _GuardLoginScreenState extends State<GuardLoginScreen> {
       return;
     }
 
-    // ✅ Step 1: Firestore se real email fetch karo
-    // (guards collection publicly readable nahi hai, isliye
-    //  pehle email dhundne ke liye temporary anonymous login)
+    // Step 1: fetch the real email from Firestore
+    // (single-document lookups by guardId are allowed by the rules)
     final snap = await Tenant.col('guards')
         .where('guardId', isEqualTo: guardId)
         .limit(1)
@@ -55,7 +54,7 @@ class _GuardLoginScreenState extends State<GuardLoginScreen> {
       return;
     }
 
-    // ✅ Step 2: Real email se login karo
+    // Step 2: sign in with the real email
     await FirebaseAuth.instance.signInWithEmailAndPassword(
       email: realEmail,
       password: _passwordController.text.trim(),
