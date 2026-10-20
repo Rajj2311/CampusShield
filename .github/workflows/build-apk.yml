@@ -25,7 +25,15 @@ jobs:
       - name: Restore google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-        run: printf "%s" "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+        run: |
+          python3 - <<'PY'
+          import os, json
+          s = os.environ["GOOGLE_SERVICES_JSON"]
+          obj, _ = json.JSONDecoder().raw_decode(s[s.index("{"):])
+          with open("android/app/google-services.json", "w") as f:
+              json.dump(obj, f)
+          print("google-services.json OK, project:", obj["project_info"]["project_id"])
+          PY
 
       - run: flutter pub get
       - run: flutter build apk --debug
