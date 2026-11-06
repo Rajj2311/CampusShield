@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/ui.dart';
 import '../auth_gate_screen.dart';
 import '../college_select_screen.dart';
+import 'payment_section.dart';
 
 /// Shows the approval status of the signed-in administrator's college request.
 class RequestStatusScreen extends StatelessWidget {
@@ -26,7 +27,7 @@ class RequestStatusScreen extends StatelessWidget {
       backgroundColor: kNavy,
       body: SafeArea(
         child: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: uid == null
                 ? const Text('Please log in again.',
@@ -91,17 +92,10 @@ class RequestStatusScreen extends StatelessWidget {
                                   child: const Text('Sign out'))
                             ]);
                       }
-                      return _card(context,
-                          icon: Icons.hourglass_top,
-                          color: kAmber,
-                          title: 'Request under review',
-                          body:
-                              'Thank you for registering $college. The Chowkidar team will review your request and contact you on ${data['phone'] ?? 'your phone number'} or ${data['email'] ?? 'your email'}.\n\nThis page updates automatically once a decision is made.',
-                          actions: [
-                            TextButton(
-                                onPressed: () => _signOut(context),
-                                child: const Text('Sign out'))
-                          ]);
+                      return PendingPaymentView(
+                          uid: uid,
+                          data: data,
+                          onSignOut: () => _signOut(context));
                     },
                   ),
           ),

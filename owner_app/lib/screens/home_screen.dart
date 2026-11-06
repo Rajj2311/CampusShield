@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../theme.dart';
 import 'requests_screen.dart';
 import 'colleges_screen.dart';
+import 'payments_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: kBg,
       appBar: AppBar(
         backgroundColor: kNavy,
-        title: Text(_i == 0 ? 'College requests' : 'All colleges',
+        title: Text(['College requests', 'All colleges', 'Payments'][_i],
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -29,13 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: _i == 0 ? const RequestsScreen() : const CollegesScreen(),
+      body: [const RequestsScreen(), const CollegesScreen(), const PaymentsScreen()][_i],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _i,
         onDestinationSelected: (v) => setState(() => _i = v),
         destinations: const [
           NavigationDestination(icon: Icon(Icons.inbox_outlined), label: 'Requests'),
           NavigationDestination(icon: Icon(Icons.apartment), label: 'Colleges'),
+          NavigationDestination(icon: Icon(Icons.payments_outlined), label: 'Payments'),
         ],
       ),
     );

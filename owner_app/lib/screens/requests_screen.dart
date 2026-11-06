@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../payment_config.dart';
 import '../role_codes.dart';
+import '../subscription.dart';
 import '../theme.dart';
 
 /// Pending college registrations. Approve = create the college workspace.
@@ -51,6 +53,20 @@ class _RequestCardState extends State<_RequestCard> {
     final r = widget.doc.data();
     final uid = widget.doc.id;
     final code = (r['collegeCode'] as String).trim().toLowerCase();
+    final cfg = await PaymentConfig.load();
+    if (!mounted) return;
+    final pay = r['payment'] is Map ? Map<String, dynamic>.from(r['payment'] as Map) : <String, dynamic>{};
+    final entry = await showPaymentDialog(
+      context,
+      cfg,
+      title: 'Verify payment and approve',
+      planId: r['plan'] as String?,
+      amount: (pay['amount'] as num?) ?? (r['amount'] as num?),
+      months: (r['months'] as num?)?.toInt(),
+      method: pay['method'] as String?,
+      reference: pay['reference'] as String?,
+    );
+    if (entry == null) return;
     setState(() => _busy = true);
     try {
       final db = FirebaseFirestore.instance;
@@ -61,11 +77,16 @@ class _RequestCardState extends State<_RequestCard> {
       }
       final college = db.collection('colleges').doc(code);
       final batch = db.batch();
+      final sub = applyPayment(batch,
+          collegeId: code,
+          collegeName: r['collegeName'] as String,
+          adminName: (r['adminName'] ?? '').toString(),
+          p: entry);
       batch.set(college, {
+        ...sub,
         'name': r['collegeName'],
         'city': r['city'],
         'hostels': r['hostels'] ?? [],
-        'status': 'approved',
         'adminUid': uid,
         'attendanceStartHour': 20,
         'attendanceEndHour': 21,
@@ -159,6 +180,13 @@ class _RequestCardState extends State<_RequestCard> {
         line(Icons.person, '${r['adminName']}'),
         line(Icons.phone, '${r['phone']}'),
         line(Icons.email, '${r['email']}'),
+        line(Icons.workspace_premium,
+            'Plan: ${r['planName'] ?? '-'}  |  Rs. ${r['amount'] ?? '-'}  |  ${r['months'] ?? '-'} months'),
+        if (r['payment'] is Map)
+          line(Icons.payments,
+              'Paid: ${(r['payment'] as Map)['method']}  |  Rs. ${(r['payment'] as Map)['amount']}  |  Ref: ${(r['payment'] as Map)['reference']}')
+        else
+          line(Icons.hourglass_empty, 'Payment details not submitted yet'),
         const SizedBox(height: 12),
         Row(children: [
           Expanded(

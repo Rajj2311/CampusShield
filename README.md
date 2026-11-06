@@ -29,5 +29,12 @@ Chowkidar is now **multi-tenant**: one app + one Firebase project serve many col
 3. `firebase deploy --only firestore:rules`
 4. Push; GitHub Actions builds `chowkidar-debug-apk` (main) and `chowkidar-owner-debug-apk` (owner).
 
+### Payments and subscriptions
+- Owner app -> Payments -> *Payment settings & plans*: UPI / bank details, contact numbers, instructions and plans (Basic / Advanced, price, months).
+- A registering college picks a plan, sees how to pay, and submits its payment reference.
+- Owner verifies it and approves (a receipt is created, `expiresAt` is set). Renewals: college page -> *Record payment*. Expiry can be set or removed by hand.
+- Expired or suspended colleges are blocked; their admin sees the renewal screen and receipts.
+- Owner has full access to every college (browse/edit/delete any data, delete a college). The college admin has full access to their own college only.
+
 ## Roadmap
 - Per-college logo and theme, per-role Firestore rules.

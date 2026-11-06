@@ -11,7 +11,12 @@ service cloud.firestore {
     function idx()        { return get(idxPath(request.auth.uid)).data; }
 
     function collegeDoc(c) { return get(/databases/$(database)/documents/colleges/$(c)).data; }
-    function collegeActive(c) { return collegeDoc(c).status == 'approved'; }
+    // approved AND (no expiry date OR subscription not yet expired)
+    function collegeActive(c) {
+      return collegeDoc(c).status == 'approved'
+          && (collegeDoc(c).get('expiresAt', null) == null
+              || request.time < collegeDoc(c).expiresAt);
+    }
 
     // signed-in user belongs to college c AND college is approved
     function isMember(c) { return hasIdx() && idx().collegeId == c && collegeActive(c); }
@@ -52,8 +57,8 @@ service cloud.firestore {
       match /students/{id} {
         allow list: if (isMember(c) || request.query.limit <= 1) || isOwner();
         allow get:  if isMember(c) || isOwner();
-        allow create, delete: if roleIs(c, 'warden');
-        allow update: if roleIs(c, 'warden') || isStaff(c)
+        allow create, delete: if roleIs(c, 'warden') || isAdmin(c);
+        allow update: if roleIs(c, 'warden') || isAdmin(c) || isStaff(c)
                       || (roleIs(c, 'student') && idx().docId == id);
       }
       match /guards/{id} {
@@ -61,14 +66,14 @@ service cloud.firestore {
         allow get:  if isMember(c) || isOwner();
         allow create: if signedIn() && request.auth.uid == id && hasIdx()
                       && idx().collegeId == c && idx().role == 'guard';
-        allow update, delete: if roleIs(c, 'warden') || (signedIn() && request.auth.uid == id && isMember(c));
+        allow update, delete: if roleIs(c, 'warden') || isAdmin(c) || (signedIn() && request.auth.uid == id && isMember(c));
       }
       match /workers/{id} {
         allow list: if (isMember(c) || request.query.limit <= 1) || isOwner();
         allow get:  if isMember(c) || isOwner();
         allow create: if signedIn() && request.auth.uid == id && hasIdx()
                       && idx().collegeId == c && idx().role == 'worker';
-        allow update, delete: if roleIs(c, 'warden') || (signedIn() && request.auth.uid == id && isMember(c));
+        allow update, delete: if roleIs(c, 'warden') || isAdmin(c) || (signedIn() && request.auth.uid == id && isMember(c));
       }
       match /wardens/{id} {
         allow read: if isMember(c) || isOwner();
@@ -122,16 +127,34 @@ service cloud.firestore {
         );
     }
 
+    // Public payment instructions + plans (edited by the owner).
+    match /appConfig/{id} {
+      allow get: if true;
+      allow list, write: if isOwner();
+    }
+
+    // Payment receipts: the owner issues them; the college admin can read its own.
+    match /receipts/{id} {
+      allow read: if isOwner()
+        || (hasIdx() && idx().role == 'admin' && idx().collegeId == resource.data.collegeId);
+      allow write: if isOwner();
+    }
+
     // College onboarding requests: the applicant creates and reads their own;
-    // only the app owner can approve/reject (update) them.
+    // the applicant may add payment details while pending; only the owner
+    // approves/rejects.
     match /collegeRequests/{id} {
       allow create: if signedIn() && request.auth.uid == id
         && request.resource.data.status == 'pending'
         && request.resource.data.keys().hasOnly(['collegeName','collegeCode','city',
-             'adminName','phone','email','hostels','status','createdAt']);
+             'adminName','phone','email','hostels','plan','planName','amount','months',
+             'status','createdAt']);
       allow get: if signedIn() && (request.auth.uid == id || isOwner());
       allow list: if isOwner();
-      allow update: if isOwner();
+      allow update: if isOwner()
+        || (signedIn() && request.auth.uid == id && resource.data.status == 'pending'
+            && request.resource.data.diff(resource.data).affectedKeys()
+                 .hasOnly(['payment','paymentSubmitted','paymentSubmittedAt']));
       allow delete: if isOwner()
         || (signedIn() && request.auth.uid == id && resource.data.status == 'rejected');
     }

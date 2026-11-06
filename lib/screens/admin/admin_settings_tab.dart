@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/tenant.dart';
 import '../../widgets/ui.dart';
+import 'subscription_card.dart';
 
 /// College-wide settings: attendance window.
 class AdminSettingsTab extends StatefulWidget {
@@ -102,6 +103,8 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                     style: const TextStyle(color: Color(0xFF2E7D32))),
               ),
       PrimaryButton(label: 'SAVE', loading: _saving, onPressed: _save),
+      const SizedBox(height: 20),
+      const SubscriptionCard(),
       const SizedBox(height: 20),
       SectionCard(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

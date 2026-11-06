@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
+import 'payment_config.dart';
 
 /// Multi-college (multi-tenant) context.
 ///
@@ -68,6 +69,13 @@ class Tenant {
     return null;
   }
 
+  static DateTime? get expiresAt {
+    final e = _config['expiresAt'];
+    return e is Timestamp ? e.toDate() : null;
+  }
+
+  static String get planName => (_config['planName'] as String?) ?? '';
+
   static int get attendanceStartHour =>
       (_config['attendanceStartHour'] as num?)?.toInt() ?? 20;
   static int get attendanceEndHour =>
@@ -76,7 +84,12 @@ class Tenant {
   // ── Loading / switching college ──────────────────────────────────
   /// Loads a college profile and makes it the active tenant.
   /// Returns null on success, or a user-facing error message.
-  static Future<String?> load(String collegeId) async {
+  /// Set when the college was loaded with [allowInactive] while suspended or
+  /// expired (only used to show the college admin the renewal screen).
+  static String? inactiveReason;
+
+  static Future<String?> load(String collegeId, {bool allowInactive = false}) async {
+    inactiveReason = null;
     final cid = collegeId.trim().toLowerCase();
     if (cid.isEmpty) return 'Enter your college code.';
     try {
@@ -89,7 +102,20 @@ class Tenant {
         return 'This college is awaiting approval from Chowkidar.';
       }
       if (status != statusApproved) {
-        return 'This college account is not active. Contact Chowkidar support.';
+        const msg = 'This college account is suspended. Contact Chowkidar support.';
+        if (!allowInactive) return msg;
+        inactiveReason = msg;
+      }
+      final exp = data['expiresAt'];
+      if (inactiveReason == null &&
+          exp is Timestamp &&
+          exp.toDate().isBefore(DateTime.now())) {
+        final cfg = await PaymentConfig.load();
+        final contact = cfg.phone.isEmpty ? 'Chowkidar support' : cfg.phone;
+        final msg =
+            'The subscription of this college has expired. Contact $contact to renew.';
+        if (!allowInactive) return msg;
+        inactiveReason = msg;
       }
       _id = cid;
       _config = data;

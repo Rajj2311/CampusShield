@@ -6,6 +6,7 @@ import '../role_select_screen.dart';
 import 'admin_hostels_tab.dart';
 import 'admin_access_tab.dart';
 import 'admin_settings_tab.dart';
+import 'admin_people_tab.dart';
 
 /// Home screen for a college administrator.
 class AdminDashboard extends StatefulWidget {
@@ -31,6 +32,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final tabs = <Widget>[
       const _OverviewTab(),
       const AdminHostelsTab(),
+      const AdminPeopleTab(),
       const AdminAccessTab(),
       const AdminSettingsTab(),
     ];
@@ -55,6 +57,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: 'Overview'),
           NavigationDestination(icon: Icon(Icons.home_work_outlined), label: 'Hostels'),
+          NavigationDestination(icon: Icon(Icons.groups_outlined), label: 'People'),
           NavigationDestination(icon: Icon(Icons.key_outlined), label: 'Access'),
           NavigationDestination(icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],

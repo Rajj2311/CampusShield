@@ -10,6 +10,7 @@ import 'guard/guard_dashboard.dart';
 import 'worker/worker_dashboard.dart';
 import 'admin/admin_dashboard.dart';
 import 'college/request_status_screen.dart';
+import 'college/subscription_expired_screen.dart';
 
 // ───── AUTH GATE (Auto-Login Checker) ─────
 // Signed-in user -> userIndex/{uid} -> college + role + doc id.
@@ -51,9 +52,15 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
         }
         problem = 'Your account is not linked to any college.';
       } else {
-        final err = await Tenant.load(idx['collegeId'] as String);
+        final isAdminUser = idx['role'] == 'admin';
+        final err = await Tenant.load(idx['collegeId'] as String,
+            allowInactive: isAdminUser);
         if (err != null) {
           problem = err;
+        } else if (Tenant.inactiveReason != null) {
+          // Admin of a suspended / expired college: show how to renew.
+          _goTo(const SubscriptionExpiredScreen());
+          return;
         } else {
           final role  = idx['role'] as String;
           final docId = idx['docId'] as String;

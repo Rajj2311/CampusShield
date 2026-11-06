@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../widgets/ui.dart';
+import '../../utils/payment_config.dart';
 import 'request_status_screen.dart';
 
 /// A college administrator registers a new college. The request is sent to
@@ -24,6 +25,21 @@ class _CollegeRegisterScreenState extends State<CollegeRegisterScreen> {
   final List<String> _hostels = [];
   bool _loading = false;
   String? _error;
+  PaymentConfig _cfg = const PaymentConfig();
+  String? _planId;
+
+  @override
+  void initState() {
+    super.initState();
+    PaymentConfig.load().then((c) {
+      if (mounted) {
+        setState(() {
+          _cfg = c;
+          _planId ??= c.plans.first.id;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -77,6 +93,8 @@ class _CollegeRegisterScreenState extends State<CollegeRegisterScreen> {
       return;
     }
 
+    final plan = _cfg.plan(_planId) ?? _cfg.plans.first;
+
     setState(() {
       _loading = true;
       _error = null;
@@ -106,6 +124,10 @@ class _CollegeRegisterScreenState extends State<CollegeRegisterScreen> {
         'phone': phone,
         'email': email,
         'hostels': _hostels,
+        'plan': plan.id,
+        'planName': plan.name,
+        'amount': plan.price,
+        'months': plan.months,
         'status': 'pending',
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -211,6 +233,32 @@ class _CollegeRegisterScreenState extends State<CollegeRegisterScreen> {
                       ))
                   .toList(),
             ),
+            const SizedBox(height: 16),
+            const Text('Choose a plan',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold, color: kNavy)),
+            const SizedBox(height: 8),
+            ..._cfg.plans.map((p) => Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: (_planId ?? _cfg.plans.first.id) == p.id ? kAmber : Colors.transparent,
+                          width: 2)),
+                  child: RadioListTile<String>(
+                    value: p.id,
+                    groupValue: _planId ?? _cfg.plans.first.id,
+                    onChanged: (v) => setState(() => _planId = v),
+                    activeColor: kNavy,
+                    title: Text('${p.name}  -  ${p.priceLabel}',
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(p.features),
+                  ),
+                )),
+            const Text(
+                'Payment is done after you submit this form. You will see how to pay on the next screen.',
+                style: TextStyle(color: Colors.black54, fontSize: 12)),
             const SizedBox(height: 16),
             const Text('Administrator account',
                 style: TextStyle(

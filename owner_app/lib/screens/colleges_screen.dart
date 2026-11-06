@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme.dart';
 import 'college_detail_screen.dart';
 
+String _d(DateTime t) => '${t.day}/${t.month}/${t.year}';
+
 class CollegesScreen extends StatelessWidget {
   const CollegesScreen({super.key});
 
@@ -25,7 +27,9 @@ class CollegesScreen extends StatelessWidget {
           children: docs.map((d) {
             final c = d.data();
             final status = (c['status'] as String?) ?? 'pending';
-            final active = status == 'approved';
+            final expired = c['expiresAt'] is Timestamp &&
+                (c['expiresAt'] as Timestamp).toDate().isBefore(DateTime.now());
+            final active = status == 'approved' && !expired;
             return Card2(
               onTap: () => Navigator.push(
                   context,
@@ -40,7 +44,7 @@ class CollegesScreen extends StatelessWidget {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text('${c['name'] ?? d.id}',
                         style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text('Code: ${d.id}  •  ${c['city'] ?? ''}',
+                    Text('Code: ${d.id}  •  ${c['city'] ?? ''}${c['expiresAt'] is Timestamp ? '  •  until ${_d((c['expiresAt'] as Timestamp).toDate())}' : ''}',
                         style: const TextStyle(color: Colors.black54, fontSize: 12)),
                   ]),
                 ),
@@ -49,7 +53,7 @@ class CollegesScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: (active ? kGreen : kRed).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20)),
-                  child: Text(status,
+                  child: Text(expired && status == 'approved' ? 'expired' : status,
                       style: TextStyle(
                           color: active ? kGreen : kRed,
                           fontSize: 11,
