@@ -1,6 +1,6 @@
-# Chowkidar — Multi-College Hostel Management
+# CampusShield — Multi-College Hostel Management
 
-Chowkidar is now **multi-tenant**: one app + one Firebase project serve many colleges, each with fully separate data.
+CampusShield is now **multi-tenant**: one app + one Firebase project serve many colleges, each with fully separate data.
 
 ## Architecture (Phase 1)
 - All college data lives under `colleges/{collegeId}/...` (students, wardens, guards, workers, leaveRequests, complaints, ...). Code uses `Tenant.col('students')` (see `lib/utils/tenant.dart`).
@@ -27,7 +27,7 @@ Chowkidar is now **multi-tenant**: one app + one Firebase project serve many col
 1. Firebase console -> Project settings -> Add app -> Android, package `com.example.chowkidar_owner`.
 2. Download the new `google-services.json` (it now contains both apps) and put its content in the `GOOGLE_SERVICES_JSON` GitHub secret.
 3. `firebase deploy --only firestore:rules`
-4. Push; GitHub Actions builds `chowkidar-debug-apk` (main) and `chowkidar-owner-debug-apk` (owner).
+4. Push; GitHub Actions builds `campusshield-debug-apk` (main) and `campusshield-owner-debug-apk` (owner).
 
 ### Payments and subscriptions
 - Owner app -> Payments -> *Payment settings & plans*: UPI / bank details, contact numbers, instructions and plans (Basic / Advanced, price, months).
@@ -38,3 +38,6 @@ Chowkidar is now **multi-tenant**: one app + one Firebase project serve many col
 
 ## Roadmap
 - Per-college logo and theme, per-role Firestore rules.
+
+### Branding
+The product name is **CampusShield** everywhere users can see it. Internal identifiers (Firebase project id `chowkidar-45762`, Android package names, the Dart package name) are unchanged on purpose, because changing them would break existing installs and logins.

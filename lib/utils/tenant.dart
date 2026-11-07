@@ -99,10 +99,10 @@ class Tenant {
       final data = snap.data() ?? {};
       final status = data['status'] as String? ?? 'pending';
       if (status == 'pending') {
-        return 'This college is awaiting approval from Chowkidar.';
+        return 'This college is awaiting approval from CampusShield.';
       }
       if (status != statusApproved) {
-        const msg = 'This college account is suspended. Contact Chowkidar support.';
+        const msg = 'This college account is suspended. Contact CampusShield support.';
         if (!allowInactive) return msg;
         inactiveReason = msg;
       }
@@ -111,7 +111,7 @@ class Tenant {
           exp is Timestamp &&
           exp.toDate().isBefore(DateTime.now())) {
         final cfg = await PaymentConfig.load();
-        final contact = cfg.phone.isEmpty ? 'Chowkidar support' : cfg.phone;
+        final contact = cfg.phone.isEmpty ? 'CampusShield support' : cfg.phone;
         final msg =
             'The subscription of this college has expired. Contact $contact to renew.';
         if (!allowInactive) return msg;

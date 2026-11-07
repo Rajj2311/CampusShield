@@ -120,7 +120,7 @@ class _StudentDashboardState extends State<StudentDashboard> {
         title: Row(children: [
           const Icon(Icons.security, color: Color(0xFFF0A500), size: 22),
           const SizedBox(width: 8),
-          const Text('Chowkidar',
+          const Text('CampusShield',
             style: TextStyle(color: Colors.white,
               fontWeight: FontWeight.bold, fontSize: 18)),
         ]),

@@ -44,14 +44,9 @@ class _CollegeSelectScreenState extends State<CollegeSelectScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              Container(
-                width: 80, height: 80,
-                decoration: BoxDecoration(
-                    color: const Color(0xFFF0A500),
-                    borderRadius: BorderRadius.circular(20)),
-                child: const Icon(Icons.security, size: 50, color: Colors.white)),
+              Image.asset('assets/images/mark.png', width: 96, height: 96),
               const SizedBox(height: 24),
-              const Text('CHOWKIDAR',
+              const Text('CAMPUSSHIELD',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold,
                       color: Colors.white, letterSpacing: 4)),
               const SizedBox(height: 40),

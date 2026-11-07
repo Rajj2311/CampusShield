@@ -84,7 +84,7 @@ class RequestStatusScreen extends StatelessWidget {
                             color: const Color(0xFFC62828),
                             title: 'Request not approved',
                             body: reason == null || reason.isEmpty
-                                ? 'Your request for $college was not approved. Please contact Chowkidar support.'
+                                ? 'Your request for $college was not approved. Please contact CampusShield support.'
                                 : 'Your request for $college was not approved.\n\nReason: $reason',
                             actions: [
                               TextButton(

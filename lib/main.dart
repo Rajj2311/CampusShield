@@ -7,15 +7,15 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const ChowkidarApp());
+  runApp(const CampusShieldApp());
 }
 
-class ChowkidarApp extends StatelessWidget {
-  const ChowkidarApp({super.key});
+class CampusShieldApp extends StatelessWidget {
+  const CampusShieldApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chowkidar',
+      title: 'CampusShield',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: const Color(0xFF1A3A5C),

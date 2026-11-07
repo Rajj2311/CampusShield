@@ -57,7 +57,7 @@ class PaymentConfig {
     this.whatsapp = '',
     this.email = '',
     this.instructions =
-        'Contact the Chowkidar team to pay. After paying, enter your payment reference in the app. Your college is activated once the payment is verified.',
+        'Contact the CampusShield team to pay. After paying, enter your payment reference in the app. Your college is activated once the payment is verified.',
     this.plans = const [
       PlanOption(id: 'basic', name: 'Basic', price: 0, months: 12, features: 'Core hostel management'),
       PlanOption(id: 'advanced', name: 'Advanced', price: 0, months: 12, features: 'All features'),
@@ -119,4 +119,14 @@ class PaymentConfig {
 String formatDate(DateTime d) {
   const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   return '${d.day} ${m[d.month - 1]} ${d.year}';
+}
+
+/// UPI deep link with a fixed amount. UPI apps open it ready to pay.
+String upiPayUri(PaymentConfig c, num amount, String note) {
+  final name = c.payeeName.isEmpty ? 'CampusShield' : c.payeeName;
+  return 'upi://pay?pa=${c.upiId.trim()}'
+      '&pn=${Uri.encodeComponent(name)}'
+      '&am=${amount.toStringAsFixed(2)}'
+      '&cu=INR'
+      '&tn=${Uri.encodeComponent(note)}';
 }

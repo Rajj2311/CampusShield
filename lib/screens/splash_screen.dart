@@ -19,9 +19,9 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1A3A5C),
       body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Image.asset('assets/images/logo.png', width: 180, height: 180),
+        Image.asset('assets/images/mark.png', width: 160, height: 160),
         const SizedBox(height: 24),
-        const Text('CHOWKIDAR', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4)),
+        const Text('CAMPUSSHIELD', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4)),
         const SizedBox(height: 8),
         const Text('Smart Hostel Management', style: TextStyle(fontSize: 16, color: Color(0xFFF0A500), letterSpacing: 1)),
       ])),

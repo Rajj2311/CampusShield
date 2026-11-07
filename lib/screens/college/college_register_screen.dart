@@ -6,7 +6,7 @@ import '../../utils/payment_config.dart';
 import 'request_status_screen.dart';
 
 /// A college administrator registers a new college. The request is sent to
-/// the Chowkidar owner, who approves or rejects it.
+/// the CampusShield owner, who approves or rejects it.
 class CollegeRegisterScreen extends StatefulWidget {
   const CollegeRegisterScreen({super.key});
   @override
@@ -170,7 +170,7 @@ class _CollegeRegisterScreenState extends State<CollegeRegisterScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             const Text(
-                'Submit your college for approval. After the Chowkidar team approves it, you can set up hostels and invite wardens, guards and workers.',
+                'Submit your college for approval. After the CampusShield team approves it, you can set up hostels and invite wardens, guards and workers.',
                 style: TextStyle(color: Colors.black54, height: 1.4)),
             const SizedBox(height: 20),
             const Text('College details',

@@ -15,7 +15,7 @@ class SubscriptionCard extends StatelessWidget {
     final to = t('periodEnd');
     final issued = t('issuedAt');
     return [
-      'CHOWKIDAR - PAYMENT RECEIPT',
+      'CAMPUSSHIELD - PAYMENT RECEIPT',
       'Receipt no: ${r['receiptNo']}',
       if (issued != null) 'Date: ${formatDate(issued)}',
       'College: ${r['collegeName']} (${r['collegeId']})',
@@ -70,7 +70,7 @@ class SubscriptionCard extends StatelessWidget {
           if (warn)
             const Padding(
               padding: EdgeInsets.only(top: 4),
-              child: Text('Your subscription ends soon. Contact Chowkidar to renew.',
+              child: Text('Your subscription ends soon. Contact CampusShield to renew.',
                   style: TextStyle(color: Color(0xFFC62828), fontSize: 12)),
             ),
         ]),

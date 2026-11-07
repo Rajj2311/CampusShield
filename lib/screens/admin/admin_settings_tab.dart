@@ -113,7 +113,7 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
           const SizedBox(height: 4),
           Text(
               Tenant.geofence == null
-                  ? 'No boundary set. A default boundary is used. Contact Chowkidar support to set your campus boundary.'
+                  ? 'No boundary set. A default boundary is used. Contact CampusShield support to set your campus boundary.'
                   : 'Boundary set (${Tenant.geofence!.length} points).',
               style: const TextStyle(color: Colors.black54, fontSize: 12)),
         ]),

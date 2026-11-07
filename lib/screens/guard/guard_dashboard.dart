@@ -34,7 +34,7 @@ class _GuardDashboardState extends State<GuardDashboard> {
         title: Row(children: const [
           Icon(Icons.security, color: Color(0xFFF0A500)),
           SizedBox(width: 8),
-          Text('Chowkidar', style: TextStyle(
+          Text('CampusShield', style: TextStyle(
             color: Colors.white, fontWeight: FontWeight.bold)),
         ]),
         actions: [

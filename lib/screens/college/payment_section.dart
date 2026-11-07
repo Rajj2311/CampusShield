@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../utils/payment_config.dart';
 import '../../widgets/ui.dart';
 
@@ -27,6 +29,24 @@ class _PendingPaymentViewState extends State<PendingPaymentView> {
   String? _error;
 
   static const _methods = ['UPI', 'Bank transfer', 'Cash', 'Cheque', 'Other'];
+
+  /// The amount is fixed by the plan the college chose; it cannot be edited.
+  num get _fixedAmount {
+    final a = widget.data['amount'];
+    return a is num ? a : 0;
+  }
+
+  String get _upiUri => upiPayUri(_cfg, _fixedAmount,
+      'CampusShield ${widget.data['collegeCode'] ?? ''} ${widget.data['planName'] ?? ''}'.trim());
+
+  Future<void> _openUpiApp() async {
+    final ok = await launchUrl(Uri.parse(_upiUri), mode: LaunchMode.externalApplication)
+        .catchError((_) => false);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No UPI app found. Scan the QR code or pay to the UPI ID.')));
+    }
+  }
 
   @override
   void initState() {
@@ -63,13 +83,13 @@ class _PendingPaymentViewState extends State<PendingPaymentView> {
 
   Future<void> _submit() async {
     final ref = _reference.text.trim();
-    final amount = num.tryParse(_amount.text.trim());
+    final amount = _fixedAmount;
     if (_method != 'Cash' && ref.isEmpty) {
       setState(() => _error = 'Enter the payment reference (UPI transaction ID, UTR or cheque number).');
       return;
     }
-    if (amount == null || amount <= 0) {
-      setState(() => _error = 'Enter the amount you paid.');
+    if (amount <= 0) {
+      setState(() => _error = 'The price of this plan is not set yet. Please contact us.');
       return;
     }
     setState(() {
@@ -154,6 +174,29 @@ class _PendingPaymentViewState extends State<PendingPaymentView> {
           _copyRow('Account number', c.accountNo),
           _copyRow('IFSC', c.ifsc),
         ],
+        if (c.upiId.isNotEmpty && _fixedAmount > 0) ...[
+          const Divider(height: 28),
+          Center(
+            child: Text('Pay Rs. $_fixedAmount with UPI',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: kNavy, fontSize: 16)),
+          ),
+          const SizedBox(height: 4),
+          const Center(
+            child: Text('The amount is already filled in. Do not change it.',
+                style: TextStyle(color: Colors.black54, fontSize: 12)),
+          ),
+          const SizedBox(height: 12),
+          Center(
+            child: QrImageView(data: _upiUri, size: 200, backgroundColor: Colors.white),
+          ),
+          const SizedBox(height: 12),
+          PrimaryButton(label: 'PAY WITH UPI APP', onPressed: _openUpiApp),
+          const SizedBox(height: 4),
+          const Center(
+            child: Text('Or scan the QR with any UPI app.',
+                style: TextStyle(color: Colors.black54, fontSize: 12)),
+          ),
+        ],
         if (c.phone.isNotEmpty || c.whatsapp.isNotEmpty || c.email.isNotEmpty) ...[
           const SizedBox(height: 12),
           const Text('Contact us',
@@ -187,10 +230,10 @@ class _PendingPaymentViewState extends State<PendingPaymentView> {
           const SizedBox(height: 10),
           TextField(controller: _reference, decoration: _dec('Reference (UPI transaction ID / UTR / cheque no.)')),
           const SizedBox(height: 10),
-          TextField(
-              controller: _amount,
-              keyboardType: TextInputType.number,
-              decoration: _dec('Amount paid (Rs.)')),
+          TextFormField(
+              initialValue: _fixedAmount > 0 ? _fixedAmount.toString() : '-',
+              readOnly: true,
+              decoration: _dec('Amount to pay (Rs.) - fixed by your plan')),
           const SizedBox(height: 10),
           TextField(controller: _note, decoration: _dec('Note (optional)')),
           if (_error != null) ...[

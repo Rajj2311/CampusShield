@@ -26,7 +26,7 @@ String newReceiptNo() {
   final n = DateTime.now();
   final d = '${n.year}${n.month.toString().padLeft(2, '0')}${n.day.toString().padLeft(2, '0')}';
   final r = Random.secure().nextInt(9000) + 1000;
-  return 'CHK-$d-$r';
+  return 'CSH-$d-$r';
 }
 
 DateTime addMonths(DateTime d, int months) {

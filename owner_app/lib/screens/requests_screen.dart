@@ -61,7 +61,10 @@ class _RequestCardState extends State<_RequestCard> {
       cfg,
       title: 'Verify payment and approve',
       planId: r['plan'] as String?,
-      amount: (pay['amount'] as num?) ?? (r['amount'] as num?),
+      // The plan's current price is the amount to verify against.
+      amount: (cfg.plan(r['plan'] as String?)?.price ?? 0) > 0
+          ? cfg.plan(r['plan'] as String?)!.price
+          : ((pay['amount'] as num?) ?? (r['amount'] as num?)),
       months: (r['months'] as num?)?.toInt(),
       method: pay['method'] as String?,
       reference: pay['reference'] as String?,

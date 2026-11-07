@@ -55,15 +55,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                    color: kAmber, borderRadius: BorderRadius.circular(20)),
-                child: const Icon(Icons.shield, size: 48, color: Colors.white),
-              ),
+              Image.asset('assets/images/mark.png', width: 96, height: 96),
               const SizedBox(height: 20),
-              const Text('CHOWKIDAR OWNER',
+              const Text('CAMPUSSHIELD OWNER',
                   style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,

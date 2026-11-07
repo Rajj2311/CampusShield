@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: chowkidar-debug-apk
+          name: campusshield-debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
 
   owner-app:
@@ -88,5 +88,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: chowkidar-owner-debug-apk
+          name: campusshield-owner-debug-apk
           path: owner_app/build/app/outputs/flutter-apk/app-debug.apk

@@ -11,7 +11,7 @@ String receiptText(Map<String, dynamic> r) {
   final to = t('periodEnd');
   final issued = t('issuedAt');
   return [
-    'CHOWKIDAR - PAYMENT RECEIPT',
+    'CAMPUSSHIELD - PAYMENT RECEIPT',
     'Receipt no: ${r['receiptNo']}',
     if (issued != null) 'Date: ${formatDate(issued)}',
     'College: ${r['collegeName']} (${r['collegeId']})',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../payment_config.dart';
 import '../theme.dart';
@@ -131,6 +132,32 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
         ),
       );
 
+  void _previewQr() {
+    final upi = _c['upiId']!.text.trim();
+    final price = _plans.isEmpty ? null : num.tryParse(_plans.first.price.text.trim());
+    if (upi.isEmpty || price == null || price <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Enter your UPI ID and a price for the first plan.')));
+      return;
+    }
+    final uri = upiPayUri(
+        PaymentConfig(upiId: upi, payeeName: _c['payeeName']!.text.trim()),
+        price,
+        'CampusShield test');
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Rs. $price'),
+        content: SizedBox(
+          width: 240,
+          height: 240,
+          child: QrImageView(data: uri, backgroundColor: Colors.white),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close'))],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -146,8 +173,18 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
           : ListView(padding: const EdgeInsets.all(16), children: [
               const Text('Pay-to details (shown to colleges)',
                   style: TextStyle(fontWeight: FontWeight.bold, color: kNavy, fontSize: 16)),
+              const SizedBox(height: 4),
+              const Text(
+                  'Enter your UPI ID. The app creates a UPI QR code and a "Pay with UPI app" button for each college automatically, with the fixed price of the plan they chose.',
+                  style: TextStyle(color: Colors.black54, fontSize: 12, height: 1.4)),
               const SizedBox(height: 10),
               for (final f in _fields) _tf(_c[f.key]!, f.value),
+              OutlinedButton.icon(
+                onPressed: _previewQr,
+                icon: const Icon(Icons.qr_code_2),
+                label: const Text('Preview UPI QR (first plan)'),
+              ),
+              const SizedBox(height: 10),
               _tf(_c['instructions']!, 'How to pay (instructions)', lines: 4),
               const SizedBox(height: 8),
               const Text('Plans',
