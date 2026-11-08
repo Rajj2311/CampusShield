@@ -250,6 +250,14 @@ Local build: `flutter pub get`, then `flutter build apk`. A low-memory machine m
 
 ---
 
+## Web version (Vercel)
+The main app also runs in the browser.
+- GitHub Actions (`deploy-web.yml`) builds the web app on every push to `main` and publishes the result to the `vercel-web` branch.
+- Deploy that branch to Vercel as a static site (Framework: Other, no build command). `web_deploy/vercel.json` adds the single-page-app rewrite.
+- Web notes: location attendance needs HTTPS and the browser's location permission (accuracy is lower than a phone); gate QR scanning is best done in the Android app.
+
+---
+
 ## Known limitations and roadmap
 **Not built yet**
 - Online payment gateway (payments are verified manually by the owner).

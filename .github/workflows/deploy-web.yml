@@ -1,0 +1,45 @@
+name: Build web (for Vercel)
+
+# Builds the Flutter web app and publishes the finished files to the
+# `vercel-web` branch. Vercel (or the Vercel CLI) deploys that branch as a
+# plain static site, so Vercel itself does not need Flutter.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter build web --release --pwa-strategy=none
+
+      - name: Add Vercel config
+        run: cp web_deploy/vercel.json build/web/vercel.json
+
+      - name: Publish to vercel-web branch
+        run: |
+          cd build/web
+          git init -q -b vercel-web
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Web build from ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" vercel-web
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: campusshield-web
+          path: build/web
